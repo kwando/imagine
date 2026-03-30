@@ -1,3 +1,33 @@
+//// A Gleam library for image manipulation powered by ImageMagick.
+////
+//// Provides a composable API for resizing, cropping, filtering, and
+//// converting images through ImageMagick command-line tools.
+////
+//// ## Basic Usage
+////
+//// ```gleam
+//// import imagine
+////
+//// fn main() {
+////   imagine.from_file("input.jpg")
+////   |> imagine.resize_contain(800, 600)
+////   |> imagine.to_file("output.jpg")
+//// }
+//// ```
+////
+//// This generates the following commands and executes it
+////
+//// ```sh
+//// magick input.jpg -resize 800x600 output.jpg
+//// ```
+////
+//// Operations are chained using the pipe operator (`|>`), building
+//// a pipeline of transformations that are executed when the image
+//// is written to a file or converted to a BitArray.
+////
+//// Read more about the available operations in
+//// [ImageMagick's documentation](https://imagemagick.org/script/command-line-processing.php).
+
 import gleam/bit_array
 import gleam/float
 import gleam/int
@@ -159,10 +189,14 @@ pub fn from_file(path: String) -> Image {
   Image(source: FileInput(path), operations: [])
 }
 
-/// Creates an image from a BitArray containing image data.
+/// Creates an image from a BitArray containing image data. During execution this
+/// file will be written to a temporary location and read from there by ImageMagick.
+/// The temporary file is written everytime the pipeline is triggered and is automatically
+/// cleaned up after execution. This is just a convenience method, prefer to use `from_file`
+/// when possible.
 ///
 /// ImageMagick will automatically detect the image format from the binary data
-/// (PNG, JPEG, BMP, etc.). No format parameter is required.
+/// (PNG, JPEG, BMP, etc.).
 ///
 /// ## Example
 ///
@@ -517,7 +551,15 @@ pub fn auto_level(image: Image) -> Image {
   prepend_operation(image, Custom("-auto-level", ""))
 }
 
-/// Adds a custom ImageMagick option.
+/// This is an escape hatch to add options that are unsupported by this library
+///
+/// ## Example
+///
+/// ```gleam
+/// image.from_file("input.png")
+/// |> image.raw("-brightness-contrast", "0x30")  // Increase contrast by 30%
+/// |> image.to_file("output.jpg")
+/// ```
 ///
 pub fn raw(image: Image, key: String, value: String) -> Image {
   prepend_operation(image, Custom(key, value:))

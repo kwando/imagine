@@ -213,7 +213,6 @@ imagine.from_file("photo.jpg")
 - `identify(path)` - Get detailed image information
 
 ### Utilities
-- `debug(image)` - Print command to stdout
 - `to_command(image, output_path)` - Returns the ImageMagick command string without executing
 - `raw(image, key, value)` - Add custom ImageMagick arguments
 
