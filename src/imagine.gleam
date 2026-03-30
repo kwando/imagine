@@ -73,62 +73,180 @@ type CropGeometry {
   Area(Int)
 }
 
+/// Controls how an image is resized. Each variant maps to a specific
+/// ImageMagick geometry flag.
+///
 pub type Resize {
+  /// Fits the image within the given dimensions, preserving aspect ratio.
+  /// The result will be equal to or smaller than the specified size.
+  /// Maps to `-resize widthxheight`.
+  ///
   Fit(Int, Int)
+
+  /// Resizes the image to fill the given dimensions, preserving aspect ratio.
+  /// The result will be equal to or larger than the specified size, so some
+  /// pixels may extend beyond the canvas (use with `extent` to crop the
+  /// overflow). Maps to `-resize widthxheight^`.
+  ///
   Fill(Int, Int)
+
+  /// Resizes to exactly the given dimensions, ignoring aspect ratio.
+  /// The image may be distorted. Maps to `-resize widthxheight!`.
+  ///
   Exact(Int, Int)
+
+  /// Resizes to the given width, adjusting height to preserve aspect ratio.
+  /// The `FitMode` controls whether the resize is applied conditionally.
+  /// Maps to `-resize width`, `-resize width>`, or `-resize width<`.
+  ///
   Width(Int, FitMode)
+
+  /// Resizes to the given height, adjusting width to preserve aspect ratio.
+  /// The `FitMode` controls whether the resize is applied conditionally.
+  /// Maps to `-resize xheight`, `-resize xheight>`, or `-resize xheight<`.
+  ///
   Height(Int, FitMode)
+
+  /// Resizes by a percentage of the original dimensions.
+  /// Maps to `-resize float%`.
+  ///
   Percent(Float)
+
+  /// Resizes so the total pixel area is at most the given number of pixels.
+  /// Useful for limiting memory usage regardless of image dimensions.
+  /// Maps to `-resize int@`.
+  ///
   ResizeArea(Int)
 }
 
+/// Controls whether a `Width` or `Height` resize is applied conditionally
+/// based on the current image size.
+///
 pub type FitMode {
+  /// Always resize, regardless of whether the image is larger or smaller
+  /// than the target. This is the default behaviour.
+  ///
   Any
+
+  /// Only resize if the image is larger than the target dimensions.
+  /// Smaller images are left untouched. Maps to the `>` geometry flag.
+  ///
   OnlyIfLarger
+
+  /// Only resize if the image is smaller than the target dimensions.
+  /// Larger images are left untouched. Maps to the `<` geometry flag.
+  ///
   OnlyIfSmaller
 }
 
+/// Controls the anchor point for crop and extent operations.
+///
+/// When cropping or padding, gravity determines which part of the image is
+/// kept or where the canvas is anchored. For example, `Center` crops from
+/// the middle, while `NorthWest` anchors to the top-left corner.
+///
+/// Set gravity with `gravity/2` before a crop or `extent/3` call, or pass
+/// it directly to `resize_cover/4`.
+///
 pub type Gravity {
+  /// Top-left corner.
   NorthWest
+  /// Top edge, horizontally centered.
   North
+  /// Top-right corner.
   NorthEast
+  /// Left edge, vertically centered.
   West
+  /// Center of the image (default).
   Center
+  /// Right edge, vertically centered.
   East
+  /// Bottom-left corner.
   SouthWest
+  /// Bottom edge, horizontally centered.
   South
+  /// Bottom-right corner.
   SouthEast
 }
 
+/// Ordered dithering patterns for use with `ordered_dither/2`.
+///
+/// Ordered dithering approximates tones by arranging black and white pixels
+/// in a fixed spatial pattern rather than random noise. Each family has
+/// different visual characteristics:
+///
+/// - **Threshold / Checks** — simple on/off patterns with no spatial spreading
+/// - **Ordered** (`o2x2`–`o8x8`) — smooth Bayer matrix patterns; larger
+///   matrices produce finer gradients at the cost of more visible structure
+/// - **Halftone Angled** (`h4x4a`–`h8x8a`) — angled halftone dots, similar
+///   to traditional print halftoning
+/// - **Halftone Orthogonal** (`h4x4o`–`h16x16o`) — axis-aligned halftone dots
+/// - **Circles Black/White** (`c5x5b`–`c7x7w`) — circular dot patterns on
+///   black or white backgrounds
+///
 pub type DitherPattern {
+  /// Flat threshold: pixels above 50% become white, below become black. No
+  /// spatial spreading.
   Threshold
+  /// Checkerboard pattern at the 50% threshold boundary.
   Checks
+  /// 2×2 Bayer ordered matrix.
   Ordered2x2
+  /// 3×3 ordered matrix.
   Ordered3x3
+  /// 4×4 Bayer ordered matrix. Good general-purpose choice.
   Ordered4x4
+  /// 8×8 Bayer ordered matrix. Finer gradients, more visible grid structure.
   Ordered8x8
+  /// 4×4 angled halftone dots.
   Halftone4x4Angled
+  /// 6×6 angled halftone dots.
   Halftone6x6Angled
+  /// 8×8 angled halftone dots. Closest to traditional print halftoning.
   Halftone8x8Angled
+  /// 4×4 orthogonal (axis-aligned) halftone dots.
   Halftone4x4Orthogonal
+  /// 6×6 orthogonal halftone dots.
   Halftone6x6Orthogonal
+  /// 8×8 orthogonal halftone dots.
   Halftone8x8Orthogonal
+  /// 16×16 orthogonal halftone dots. Finest tonal gradients in this family.
   Halftone16x16Orthogonal
+  /// 5×5 circular dots on a black background.
   Circles5x5Black
+  /// 6×6 circular dots on a black background.
   Circles6x6Black
+  /// 7×7 circular dots on a black background.
   Circles7x7Black
+  /// 5×5 circular dots on a white background.
   Circles5x5White
+  /// 6×6 circular dots on a white background.
   Circles6x6White
+  /// 7×7 circular dots on a white background.
   Circles7x7White
 }
 
+/// Represents an image colorspace.
+///
+/// Used both as input to `colorspace/2` and as output in `ImageInfo` returned
+/// by `identify/1`. The `Unknown` variant acts as an escape hatch for
+/// colorspaces not enumerated here (e.g. `HSL`, `Lab`, `YUV`).
+///
 pub type Colorspace {
+  /// Standard RGB with gamma correction (the most common colorspace for
+  /// web and screen images).
   Srgb
+  /// Grayscale. See `colorspace/2` for the difference between `Gray` and
+  /// `monochrome/1`.
   Gray
+  /// Linear RGB, without gamma correction.
   Rgb
+  /// Cyan/Magenta/Yellow/Key (Black). Used in print workflows.
   Cmyk
+  /// Luma + chroma channels. Used in video and some image compression formats.
   YCbCr
+  /// A colorspace not covered by the variants above. The string value is
+  /// passed directly to ImageMagick (e.g. `Unknown("HSL")`).
   Unknown(String)
 }
 
@@ -167,15 +285,34 @@ pub type Filter {
   Catrom
 }
 
+/// Errors that can be returned by fallible operations in this library.
+///
 pub type Error {
+  /// The image format string returned by ImageMagick could not be mapped to
+  /// a known `Format` variant. The raw string is included for debugging.
   CannotParseFormat(String)
+  /// The width value in ImageMagick's identify output could not be parsed as
+  /// an integer.
   CannotParseWidth
+  /// The height value in ImageMagick's identify output could not be parsed as
+  /// an integer.
   CannotParseHeight
+  /// The bit depth value in ImageMagick's identify output could not be parsed
+  /// as an integer.
   CannotParseDepth
+  /// The file size value in ImageMagick's identify output could not be parsed
+  /// as an integer.
   CannotParseFileSize
+  /// ImageMagick's identify output could not be interpreted. The raw output
+  /// string is included for debugging.
   CannotIdentify(String)
+  /// The ImageMagick command exited with a non-zero status. Includes the exit
+  /// code and stderr output.
   CommandFailed(exit_code: Int, stderr: String)
+  /// A temporary file was created successfully but writing the image data to
+  /// it failed. Used by `from_bits/1`.
   CannotWriteTempFile
+  /// The temporary file itself could not be created. Used by `from_bits/1`.
   CannotCreateTempFile
 }
 
@@ -313,14 +450,29 @@ pub fn extent(image: Image, width: Int, height: Int) -> Image {
   )
 }
 
-/// Sets the colorspace of the image (e.g., "sRGB", "Gray", "CMYK").
+/// Sets the colorspace of the image.
+///
+/// When converting to grayscale, prefer `Gray` over `monochrome/1`. `Gray`
+/// preserves the full 256-level tonal range, producing smooth gradients and
+/// intermediate gray values. `monochrome/1` reduces the image to pure black
+/// and white only (1-bit), using dithering to approximate tones.
+///
 /// Uses ImageMagick `-colorspace` option.
 ///
-pub fn colorspace(image: Image, kind: String) -> Image {
-  prepend_operation(image, Colorspace(kind))
+pub fn colorspace(image: Image, kind: Colorspace) -> Image {
+  prepend_operation(image, Colorspace(colorspace_to_string(kind)))
 }
 
-/// Converts the image to monochrome (black and white).
+/// Converts the image to monochrome (pure black and white, 1-bit).
+///
+/// Unlike `colorspace(image, Gray)`, this produces only pure black and pure
+/// white pixels — no intermediate grays. ImageMagick applies dithering to
+/// approximate tones using patterns of black and white dots.
+///
+/// Use this when you need a hard black-and-white result (e.g. PBM output,
+/// printed bitmaps). Use `colorspace(image, Gray)` instead when you want to
+/// preserve the full 256-level grayscale tonal range.
+///
 /// Uses ImageMagick `-monochrome` option.
 ///
 pub fn monochrome(image: Image) -> Image {
@@ -425,14 +577,23 @@ fn prepend_operation(image: Image, operation: ImageOperation) -> Image {
   Image(..image, operations: [operation, ..image.operations])
 }
 
+/// Metadata about an image, returned by `identify/1`.
+///
 pub type ImageInfo {
   ImageInfo(
+    /// The image format (e.g. `Png`, `Jpeg`).
     format: Format,
+    /// Image width in pixels.
     width: Int,
+    /// Image height in pixels.
     height: Int,
+    /// The colorspace of the image data (e.g. `Srgb`, `Gray`).
     colorspace: Colorspace,
+    /// Bit depth per channel (e.g. 8 for standard images, 16 for HDR).
     depth: Int,
+    /// Whether the image has an alpha (transparency) channel.
     has_alpha: Bool,
+    /// File size in bytes.
     file_size: Int,
   )
 }
@@ -512,7 +673,20 @@ fn string_to_colorspace(input: String) -> Colorspace {
     "sRGB" -> Srgb
     "RGB" -> Rgb
     "Gray" -> Gray
+    "CMYK" -> Cmyk
+    "YCbCr" -> YCbCr
     _ -> Unknown(input)
+  }
+}
+
+fn colorspace_to_string(colorspace: Colorspace) -> String {
+  case colorspace {
+    Srgb -> "sRGB"
+    Rgb -> "RGB"
+    Gray -> "Gray"
+    Cmyk -> "CMYK"
+    YCbCr -> "YCbCr"
+    Unknown(s) -> s
   }
 }
 
@@ -581,12 +755,23 @@ pub fn alpha_to_image(image: Image) -> Image {
   |> raw("-alpha", "extract")
 }
 
+/// Output image format, used with `to_bits/2` and inferred from the file
+/// extension by `to_file/2`.
+///
 pub type Format {
+  /// Portable Network Graphics. Lossless, supports transparency.
   Png
+  /// Windows Bitmap. Uncompressed, widely compatible.
   Bmp
+  /// JPEG. Lossy compression, no transparency. Best for photographs.
   Jpeg
+  /// Portable Bitmap. 1-bit black and white, plain-text or binary encoding.
   Pbm
+  /// Portable Graymap. 8-bit grayscale, plain-text or binary encoding.
   Pgm
+  /// Preserve the original format. When used with `to_bits/2`, ImageMagick
+  /// writes to stdout without re-encoding, keeping the original format and
+  /// compression intact.
   Keep
 }
 
