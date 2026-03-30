@@ -1,0 +1,326 @@
+import gleam/bit_array
+import gleam/float
+import gleam/int
+import gleam/io
+import gleam/list
+import gleam/result
+import gleam/string
+import shellout
+
+type Input {
+  FileInput(path: String)
+}
+
+type Output {
+  FileOutput(path: String)
+  StdoutOutput(format: Format)
+}
+
+type ImageOperation {
+  Resize(kind: String)
+  Colorspace(String)
+  ContrastStretch(String)
+  OrderedDither(String)
+  Monochrome
+  Negate
+  Blur(radius: Float)
+  Crop(Geometry)
+  Custom(key: String, value: String)
+}
+
+type Geometry {
+  FixedWidth(Int)
+  FixedHeight(Int)
+  Contain(Int, Int)
+  Scale(Float)
+  Area(Int)
+}
+
+pub type Gravity {
+  NorthWest
+  North
+  NorthEast
+  West
+  Center
+  East
+  SouthWest
+  South
+  SouthEast
+}
+
+pub type DitherPattern {
+  Threshold
+  Checks
+  Ordered2x2
+  Ordered3x3
+  Ordered4x4
+  Ordered8x8
+  Halftone4x4Angled
+  Halftone6x6Angled
+  Halftone8x8Angled
+  Halftone4x4Orthogonal
+  Halftone6x6Orthogonal
+  Halftone8x8Orthogonal
+  Halftone16x16Orthogonal
+  Circles5x5Black
+  Circles6x6Black
+  Circles7x7Black
+  Circles5x5White
+  Circles6x6White
+  Circles7x7White
+}
+
+pub type Error {
+  CannotParseFormat(String)
+  CannotParseDimension
+  CannotIdentify(String)
+  CommandFailed(exit_code: Int, stderr: String)
+}
+
+pub opaque type Image {
+  Image(source: Input, operations: List(ImageOperation))
+}
+
+pub fn from_file(path: String) {
+  Image(source: FileInput(path), operations: [])
+}
+
+pub fn resize(image, kind: String) {
+  prepend_operation(image, Resize(kind))
+}
+
+pub fn colorspace(image, kind: String) {
+  prepend_operation(image, Colorspace(kind))
+}
+
+pub fn monochrome(image) {
+  prepend_operation(image, Monochrome)
+}
+
+pub fn negate(image) {
+  prepend_operation(image, Negate)
+}
+
+pub fn blur(image, radius: Float) {
+  prepend_operation(image, Blur(radius))
+}
+
+pub fn auto_orient(image) {
+  prepend_operation(image, Custom("-auto-orient", ""))
+}
+
+pub fn crop_area(image, pixels: Int) {
+  prepend_operation(image, Crop(Area(pixels)))
+}
+
+pub fn crop_width(image, pixels: Int) {
+  prepend_operation(image, Crop(FixedWidth(pixels)))
+}
+
+pub fn contain(image, width: Int, height: Int) {
+  prepend_operation(image, Crop(Contain(width, height)))
+}
+
+pub fn flip(image) {
+  prepend_operation(image, Custom("-flip", ""))
+}
+
+pub fn gravity(image, gravity: Gravity) {
+  prepend_operation(
+    image,
+    Custom("-gravity", case gravity {
+      NorthWest -> "northwest"
+      North -> "north"
+      NorthEast -> "northeast"
+      West -> "west"
+      Center -> "center"
+      East -> "east"
+      SouthWest -> "southwest"
+      South -> "south"
+      SouthEast -> "southeast"
+    }),
+  )
+}
+
+fn prepend_operation(image, operation) {
+  Image(..image, operations: [operation, ..image.operations])
+}
+
+pub type ImageInfo {
+  ImageInfo(format: Format, width: Int, height: Int)
+}
+
+pub fn identify(path: String) -> Result(ImageInfo, Error) {
+  let cmd_result =
+    shellout.command(
+      run: "magick",
+      with: ["identify", "-format", "%m %w %h", path],
+      in: ".",
+      opt: [],
+    )
+
+  case cmd_result {
+    Ok(identity_str) -> {
+      case string.split(identity_str, " ") {
+        [format, width, height] -> {
+          use format <- result.try(
+            string_to_format(format)
+            |> result.replace_error(CannotParseFormat(format)),
+          )
+          use width <- result.try(
+            int.parse(width)
+            |> result.replace_error(CannotParseDimension),
+          )
+          use height <- result.try(
+            int.parse(height) |> result.replace_error(CannotParseDimension),
+          )
+          Ok(ImageInfo(format:, width:, height:))
+        }
+        _ -> Error(CannotIdentify(identity_str))
+      }
+    }
+    Error(#(exit_code, stderr)) -> Error(CommandFailed(exit_code:, stderr:))
+  }
+}
+
+fn string_to_format(input) {
+  case input {
+    "BMP" -> Ok(Bmp)
+    "BMP3" -> Ok(Bmp)
+    "JPEG" -> Ok(Jpeg)
+    "PNG" -> Ok(Png)
+    "PBM" -> Ok(Pbm)
+    "PGM" -> Ok(Pgm)
+    _ -> Error(Nil)
+  }
+}
+
+pub fn ordered_dither(image: Image, kind: DitherPattern) -> Image {
+  let pattern = case kind {
+    Threshold -> "threshold"
+    Checks -> "checks"
+    Ordered2x2 -> "o2x2"
+    Ordered3x3 -> "o3x3"
+    Ordered4x4 -> "o4x4"
+    Ordered8x8 -> "o8x8"
+    Halftone4x4Angled -> "h4x4a"
+    Halftone6x6Angled -> "h6x6a"
+    Halftone8x8Angled -> "h8x8a"
+    Halftone4x4Orthogonal -> "h4x4o"
+    Halftone6x6Orthogonal -> "h6x6o"
+    Halftone8x8Orthogonal -> "h8x8o"
+    Halftone16x16Orthogonal -> "h16x16o"
+    Circles5x5Black -> "c5x5b"
+    Circles6x6Black -> "c6x6b"
+    Circles7x7Black -> "c7x7b"
+    Circles5x5White -> "c5x5w"
+    Circles6x6White -> "c6x6w"
+    Circles7x7White -> "c7x7w"
+  }
+  prepend_operation(image, OrderedDither(pattern))
+}
+
+pub fn auto_level(image: Image) {
+  prepend_operation(image, Custom("-auto-level", ""))
+}
+
+pub fn raw(image, key, value) {
+  prepend_operation(image, Custom(key, value:))
+}
+
+pub fn background(image: Image, color: String) {
+  raw(image, "-background", color)
+}
+
+pub fn alpha_to_image(image: Image) {
+  image
+  |> raw("-alpha", "extract")
+}
+
+pub type Format {
+  Png
+  Bmp
+  Jpeg
+  Pbm
+  Pgm
+  Keep
+}
+
+pub fn to_bits(image: Image, format: Format) {
+  case
+    apply(image.source, list.reverse(image.operations), StdoutOutput(format:))
+  {
+    Ok(bits) -> bit_array.from_string(bits) |> Ok
+    Error(_) -> Error(Nil)
+  }
+}
+
+pub fn debug(image) {
+  let args = to_args(image, FileOutput("debug.png"))
+  io.println("magick " <> string.join(args, " "))
+  image
+}
+
+pub fn to_file(image: Image, path: String) {
+  apply(image.source, list.reverse(image.operations), FileOutput(path))
+}
+
+fn to_args(image: Image, output: Output) {
+  list.flatten([
+    [image.source.path],
+    image.operations
+      |> list.reverse
+      |> list.map(operation_to_args)
+      |> list.flatten,
+    [output_to_arg(output)],
+  ])
+}
+
+fn output_to_arg(output: Output) {
+  case output {
+    FileOutput(path:) -> path
+    StdoutOutput(Keep) -> "-"
+    StdoutOutput(format: Png) -> "png:-"
+    StdoutOutput(format: Bmp) -> "bmp:-"
+    StdoutOutput(format: Jpeg) -> "jpg:-"
+    StdoutOutput(format: Pbm) -> "pbm:-"
+    StdoutOutput(format: Pgm) -> "pgm:-"
+  }
+}
+
+fn apply(input: Input, commands: List(ImageOperation), output: Output) {
+  let args =
+    list.flatten([
+      [input.path],
+      list.map(commands, operation_to_args)
+        |> list.flatten,
+      [output_to_arg(output)],
+    ])
+
+  shellout.command(run: "magick", with: args, in: ".", opt: [])
+}
+
+fn operation_to_args(operation: ImageOperation) {
+  case operation {
+    Resize(kind:) -> ["-resize", kind]
+    Colorspace(kind) -> ["-colorspace", kind]
+    ContrastStretch(kind) -> ["-contrast-stretch", kind]
+    Monochrome -> ["-monochrome"]
+    OrderedDither(kind) -> ["-ordered-dither", kind]
+    Negate -> ["-negate"]
+    Blur(radius:) -> ["-blur", float.to_string(radius)]
+    Crop(geometry) -> ["-crop", geom_to_arg(geometry)]
+    Custom(key:, value: "") -> [key]
+    Custom(key:, value:) -> [key, value]
+  }
+}
+
+fn geom_to_arg(geometry: Geometry) {
+  case geometry {
+    FixedWidth(w) -> int.to_string(w) <> "x0+0+0"
+    FixedHeight(h) -> int.to_string(h)
+    Scale(scale) -> float.to_string(scale) <> "%"
+    Area(area) -> int.to_string(area) <> "@"
+    Contain(w, h) -> int.to_string(w) <> "x" <> int.to_string(h)
+  }
+}
