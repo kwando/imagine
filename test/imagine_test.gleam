@@ -1,3 +1,4 @@
+import gleam/string
 import gleeunit
 import imagine
 import simplifile
@@ -216,4 +217,17 @@ pub fn filter_changes_resampling_algorithm_test() {
   // Should resize successfully with nearest neighbor filter
   assert info.width == 100
   assert info.height == 75
+}
+
+pub fn to_command_returns_magick_command_string_test() {
+  let command =
+    imagine.from_file("test/fixtures/logo.png")
+    |> imagine.resize_contain(100, 100)
+    |> imagine.to_command("output.png")
+
+  // Command should start with "magick" and contain the input file and operations
+  assert string.starts_with(command, "magick ")
+  assert string.contains(command, "test/fixtures/logo.png")
+  assert string.contains(command, "-resize")
+  assert string.contains(command, "output.png")
 }

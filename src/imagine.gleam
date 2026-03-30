@@ -450,6 +450,27 @@ pub fn debug(image) {
   image
 }
 
+/// Returns the ImageMagick command that would be executed for this image pipeline.
+///
+/// This is useful for debugging or logging purposes. The returned string includes
+/// the "magick" command prefix and can be copy-pasted directly into a terminal.
+///
+/// ## Example
+///
+/// ```gleam
+/// let command =
+///   from_file("input.png")
+///   |> resize_contain(100, 100)
+///   |> to_command("output.png")
+///
+/// // command == "magick input.png -resize 100x100 output.png"
+/// ```
+///
+pub fn to_command(image: Image, output_path: String) -> String {
+  let args = to_args(image, FileOutput(output_path))
+  "magick " <> string.join(args, " ")
+}
+
 // write the image to an file. Make sure to include the format as an extension if you want a change
 pub fn to_file(image: Image, path: String) -> Result(String, Error) {
   apply(image.source, list.reverse(image.operations), FileOutput(path))
