@@ -11,6 +11,10 @@ pub fn identify_reads_image_info_test() {
   assert info.format == imagine.Png
   assert info.width == 640
   assert info.height == 480
+  assert info.colorspace == imagine.Srgb
+  assert info.depth == 8
+  assert info.has_alpha == False
+  assert info.file_size > 0
 }
 
 pub fn identify_reads_jpeg_test() {
@@ -18,6 +22,10 @@ pub fn identify_reads_jpeg_test() {
   assert info.format == imagine.Jpeg
   assert info.width == 70
   assert info.height == 46
+  assert info.colorspace == imagine.Srgb
+  assert info.depth == 8
+  assert info.has_alpha == False
+  assert info.file_size > 0
 }
 
 pub fn identify_fails_for_nonexistent_file_test() {

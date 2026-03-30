@@ -86,9 +86,21 @@ pub type DitherPattern {
   Circles7x7White
 }
 
+pub type Colorspace {
+  Srgb
+  Gray
+  Rgb
+  Cmyk
+  YCbCr
+  Unknown(String)
+}
+
 pub type Error {
   CannotParseFormat(String)
-  CannotParseDimension
+  CannotParseWidth
+  CannotParseHeight
+  CannotParseDepth
+  CannotParseFileSize
   CannotIdentify(String)
   CommandFailed(exit_code: Int, stderr: String)
 }
@@ -185,14 +197,27 @@ fn prepend_operation(image, operation) {
 }
 
 pub type ImageInfo {
-  ImageInfo(format: Format, width: Int, height: Int)
+  ImageInfo(
+    format: Format,
+    width: Int,
+    height: Int,
+    colorspace: Colorspace,
+    depth: Int,
+    has_alpha: Bool,
+    file_size: Int,
+  )
 }
 
 pub fn identify(path: String) -> Result(ImageInfo, Error) {
   let cmd_result =
     shellout.command(
       run: "magick",
-      with: ["identify", "-format", "%m %w %h", path],
+      with: [
+        "identify",
+        "-format",
+        "%m %w %h %[colorspace] %[depth] %[opaque] %[size]",
+        path,
+      ],
       in: ".",
       opt: [],
     )
@@ -200,19 +225,36 @@ pub fn identify(path: String) -> Result(ImageInfo, Error) {
   case cmd_result {
     Ok(identity_str) -> {
       case string.split(identity_str, " ") {
-        [format, width, height] -> {
+        [format, width, height, colorspace, depth, is_opaque, size] -> {
           use format <- result.try(
             string_to_format(format)
             |> result.replace_error(CannotParseFormat(format)),
           )
           use width <- result.try(
             int.parse(width)
-            |> result.replace_error(CannotParseDimension),
+            |> result.replace_error(CannotParseWidth),
           )
           use height <- result.try(
-            int.parse(height) |> result.replace_error(CannotParseDimension),
+            int.parse(height) |> result.replace_error(CannotParseHeight),
           )
-          Ok(ImageInfo(format:, width:, height:))
+          use depth <- result.try(
+            int.parse(depth) |> result.replace_error(CannotParseDepth),
+          )
+          use file_size <- result.try(
+            int.parse(string.drop_end(size, 1))
+            |> result.replace_error(CannotParseFileSize),
+          )
+          let has_alpha = is_opaque == "False"
+          let colorspace = string_to_colorspace(colorspace)
+          Ok(ImageInfo(
+            format:,
+            width:,
+            height:,
+            colorspace:,
+            depth:,
+            has_alpha:,
+            file_size:,
+          ))
         }
         _ -> Error(CannotIdentify(identity_str))
       }
@@ -230,6 +272,15 @@ fn string_to_format(input) {
     "PBM" -> Ok(Pbm)
     "PGM" -> Ok(Pgm)
     _ -> Error(Nil)
+  }
+}
+
+fn string_to_colorspace(input) {
+  case input {
+    "sRGB" -> Srgb
+    "RGB" -> Rgb
+    "Gray" -> Gray
+    _ -> Unknown(input)
   }
 }
 
