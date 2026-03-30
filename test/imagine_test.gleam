@@ -231,3 +231,20 @@ pub fn to_command_returns_magick_command_string_test() {
   assert string.contains(command, "-resize")
   assert string.contains(command, "output.png")
 }
+
+pub fn from_bits_round_trip_test() {
+  // Read image file as bytes
+  let assert Ok(bits) = simplifile.read_bits("test/fixtures/logo.png")
+
+  // Create image from bytes and process
+  let assert Ok(_) =
+    imagine.from_bits(bits)
+    |> imagine.resize_contain(100, 100)
+    |> imagine.to_file("test/output/from_bits.png")
+
+  // Verify the output
+  let assert Ok(info) = imagine.identify("test/output/from_bits.png")
+  assert info.format == imagine.Png
+  assert info.width == 100
+  assert info.height == 75
+}

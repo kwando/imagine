@@ -6,9 +6,12 @@ import gleam/list
 import gleam/result
 import gleam/string
 import shellout
+import simplifile
+import temporary
 
 type Input {
   FileInput(path: String)
+  BitArrayInput(bits: BitArray)
 }
 
 type Output {
@@ -143,29 +146,54 @@ pub type Error {
   CannotParseFileSize
   CannotIdentify(String)
   CommandFailed(exit_code: Int, stderr: String)
+  CannotWriteTempFile
+  CannotCreateTempFile
 }
 
 pub opaque type Image {
   Image(source: Input, operations: List(ImageOperation))
 }
 
-pub fn from_file(path: String) {
+pub fn from_file(path: String) -> Image {
   Image(source: FileInput(path), operations: [])
 }
 
-pub fn resize(image, kind: Resize) {
+/// Creates an image from a BitArray containing image data.
+///
+/// ImageMagick will automatically detect the image format from the binary data
+/// (PNG, JPEG, BMP, etc.). No format parameter is required.
+///
+/// ## Example
+///
+/// ```gleam
+/// let bits = read_image_from_database()
+/// from_bits(bits)
+/// |> resize_contain(100, 100)
+/// |> to_file("resized.png")
+/// ```
+///
+pub fn from_bits(bits: BitArray) -> Image {
+  Image(source: BitArrayInput(bits), operations: [])
+}
+
+pub fn resize(image: Image, kind: Resize) -> Image {
   prepend_operation(image, Resize(kind))
 }
 
-pub fn resize_contain(image, width, height) {
+pub fn resize_contain(image: Image, width: Int, height: Int) -> Image {
   resize(image, Fit(width, height))
 }
 
-pub fn resize_fill(image, width, height) {
+pub fn resize_fill(image: Image, width: Int, height: Int) -> Image {
   resize(image, Exact(width, height))
 }
 
-pub fn resize_cover(image, width, height, gravity_val: Gravity) {
+pub fn resize_cover(
+  image: Image,
+  width: Int,
+  height: Int,
+  gravity_val: Gravity,
+) -> Image {
   image
   |> resize(Fill(width, height))
   |> gravity(gravity_val)
@@ -191,7 +219,7 @@ pub fn resize_cover(image, width, height, gravity_val: Gravity) {
 /// |> to_file("preview.jpg")
 /// ```
 ///
-pub fn thumbnail(image, width: Int, height: Int) {
+pub fn thumbnail(image: Image, width: Int, height: Int) -> Image {
   prepend_operation(image, Thumbnail(width, height))
 }
 
@@ -219,66 +247,66 @@ pub fn thumbnail(image, width: Int, height: Int) {
 /// |> to_file("resized.png")
 /// ```
 ///
-pub fn filter(image, filter: Filter) {
+pub fn filter(image: Image, filter: Filter) -> Image {
   prepend_operation(image, SetFilter(filter))
 }
 
-pub fn extent(image, width, height) {
+pub fn extent(image: Image, width: Int, height: Int) -> Image {
   prepend_operation(
     image,
     Custom("-extent", int.to_string(width) <> "x" <> int.to_string(height)),
   )
 }
 
-pub fn colorspace(image, kind: String) {
+pub fn colorspace(image: Image, kind: String) -> Image {
   prepend_operation(image, Colorspace(kind))
 }
 
-pub fn monochrome(image) {
+pub fn monochrome(image: Image) -> Image {
   prepend_operation(image, Monochrome)
 }
 
-pub fn negate(image) {
+pub fn negate(image: Image) -> Image {
   prepend_operation(image, Negate)
 }
 
-pub fn blur(image, radius: Float) {
+pub fn blur(image: Image, radius: Float) -> Image {
   prepend_operation(image, Blur(radius))
 }
 
-pub fn auto_orient(image) {
+pub fn auto_orient(image: Image) -> Image {
   prepend_operation(image, Custom("-auto-orient", ""))
 }
 
-pub fn crop_area(image, pixels: Int) {
+pub fn crop_area(image: Image, pixels: Int) -> Image {
   prepend_operation(image, Crop(Area(pixels)))
 }
 
-pub fn crop_width(image, pixels: Int) {
+pub fn crop_width(image: Image, pixels: Int) -> Image {
   prepend_operation(image, Crop(FixedWidth(pixels)))
 }
 
-pub fn contain(image, width: Int, height: Int) {
+pub fn contain(image: Image, width: Int, height: Int) -> Image {
   prepend_operation(image, Crop(Contain(width, height)))
 }
 
-pub fn flip(image) {
+pub fn flip(image: Image) -> Image {
   prepend_operation(image, Custom("-flip", ""))
 }
 
-pub fn flop(image) {
+pub fn flop(image: Image) -> Image {
   prepend_operation(image, Flop)
 }
 
-pub fn sharpen(image, radius: Float) {
+pub fn sharpen(image: Image, radius: Float) -> Image {
   prepend_operation(image, Sharpen(radius))
 }
 
-pub fn strip(image) {
+pub fn strip(image: Image) -> Image {
   prepend_operation(image, Strip)
 }
 
-pub fn gravity(image, gravity: Gravity) {
+pub fn gravity(image: Image, gravity: Gravity) -> Image {
   prepend_operation(
     image,
     Custom("-gravity", case gravity {
@@ -295,7 +323,7 @@ pub fn gravity(image, gravity: Gravity) {
   )
 }
 
-fn prepend_operation(image, operation) {
+fn prepend_operation(image: Image, operation: ImageOperation) -> Image {
   Image(..image, operations: [operation, ..image.operations])
 }
 
@@ -366,7 +394,7 @@ pub fn identify(path: String) -> Result(ImageInfo, Error) {
   }
 }
 
-fn string_to_format(input) {
+fn string_to_format(input: String) -> Result(Format, Nil) {
   case input {
     "BMP" -> Ok(Bmp)
     "BMP3" -> Ok(Bmp)
@@ -378,7 +406,7 @@ fn string_to_format(input) {
   }
 }
 
-fn string_to_colorspace(input) {
+fn string_to_colorspace(input: String) -> Colorspace {
   case input {
     "sRGB" -> Srgb
     "RGB" -> Rgb
@@ -412,19 +440,19 @@ pub fn ordered_dither(image: Image, kind: DitherPattern) -> Image {
   prepend_operation(image, OrderedDither(pattern))
 }
 
-pub fn auto_level(image: Image) {
+pub fn auto_level(image: Image) -> Image {
   prepend_operation(image, Custom("-auto-level", ""))
 }
 
-pub fn raw(image, key, value) {
+pub fn raw(image: Image, key: String, value: String) -> Image {
   prepend_operation(image, Custom(key, value:))
 }
 
-pub fn background(image: Image, color: String) {
+pub fn background(image: Image, color: String) -> Image {
   raw(image, "-background", color)
 }
 
-pub fn alpha_to_image(image: Image) {
+pub fn alpha_to_image(image: Image) -> Image {
   image
   |> raw("-alpha", "extract")
 }
@@ -439,12 +467,16 @@ pub type Format {
 }
 
 // returns the image as a BitArray in the specified format
-pub fn to_bits(image: Image, format: Format) {
-  apply(image.source, list.reverse(image.operations), StdoutOutput(format:))
+pub fn to_bits(image: Image, format: Format) -> Result(BitArray, Error) {
+  execute_commands(
+    image.source,
+    list.reverse(image.operations),
+    StdoutOutput(format:),
+  )
   |> result.map(bit_array.from_string)
 }
 
-pub fn debug(image) {
+pub fn debug(image: Image) -> Image {
   let args = to_args(image, FileOutput("debug.png"))
   io.println("magick " <> string.join(args, " "))
   image
@@ -473,12 +505,21 @@ pub fn to_command(image: Image, output_path: String) -> String {
 
 // write the image to an file. Make sure to include the format as an extension if you want a change
 pub fn to_file(image: Image, path: String) -> Result(String, Error) {
-  apply(image.source, list.reverse(image.operations), FileOutput(path))
+  execute_commands(
+    image.source,
+    list.reverse(image.operations),
+    FileOutput(path),
+  )
 }
 
-fn to_args(image: Image, output: Output) {
+fn to_args(image: Image, output: Output) -> List(String) {
+  let input = case image.source {
+    FileInput(path:) -> path
+    BitArrayInput(_) -> "<bitarray>"
+  }
+
   list.flatten([
-    [image.source.path],
+    [input],
     image.operations
       |> list.reverse
       |> list.map(operation_to_args)
@@ -487,7 +528,7 @@ fn to_args(image: Image, output: Output) {
   ])
 }
 
-fn output_to_arg(output: Output) {
+fn output_to_arg(output: Output) -> String {
   case output {
     FileOutput(path:) -> path
     StdoutOutput(Keep) -> "-"
@@ -499,22 +540,58 @@ fn output_to_arg(output: Output) {
   }
 }
 
-fn apply(input: Input, commands: List(ImageOperation), output: Output) {
+fn execute_commands(
+  input: Input,
+  commands: List(ImageOperation),
+  output: Output,
+) -> Result(String, Error) {
+  case input {
+    FileInput(path:) -> execute_commands_on_file(path, commands, output)
+    BitArrayInput(bits:) -> {
+      use path <- with_temp_file(bits)
+      execute_commands_on_file(path, commands, output)
+    }
+  }
+}
+
+fn execute_commands_on_file(
+  input_path: String,
+  commands: List(ImageOperation),
+  output: Output,
+) -> Result(String, Error) {
   let args =
     list.flatten([
-      [input.path],
+      [input_path],
       list.map(commands, operation_to_args)
         |> list.flatten,
       [output_to_arg(output)],
     ])
-
   case shellout.command(run: "magick", with: args, in: ".", opt: []) {
     Ok(data) -> Ok(data)
     Error(#(exit_code, stderr)) -> Error(CommandFailed(exit_code:, stderr:))
   }
 }
 
-fn operation_to_args(operation: ImageOperation) {
+fn with_temp_file(
+  data: BitArray,
+  callback: fn(String) -> Result(a, Error),
+) -> Result(a, Error) {
+  case
+    {
+      use path <- temporary.create(temporary.file())
+      use _ <- result.try(
+        simplifile.write_bits(path, data)
+        |> result.replace_error(CannotWriteTempFile),
+      )
+      callback(path)
+    }
+  {
+    Ok(value) -> value
+    Error(_) -> Error(CannotCreateTempFile)
+  }
+}
+
+fn operation_to_args(operation: ImageOperation) -> List(String) {
   case operation {
     Resize(kind) -> ["-resize", resize_to_string(kind)]
     Thumbnail(width, height) -> [
@@ -568,7 +645,7 @@ fn filter_to_string(filter: Filter) -> String {
   }
 }
 
-fn geom_to_arg(geometry: CropGeometry) {
+fn geom_to_arg(geometry: CropGeometry) -> String {
   case geometry {
     FixedWidth(w) -> int.to_string(w) <> "x0+0+0"
     FixedHeight(h) -> int.to_string(h)
