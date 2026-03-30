@@ -99,18 +99,6 @@ pub fn to_bits_returns_data_test() {
   assert info.height == 33
 }
 
-pub fn debug_does_not_break_chain_test() {
-  let assert Ok(_) =
-    imagine.from_file("test/fixtures/logo.png")
-    |> imagine.resize(imagine.Fit(100, 100))
-    |> imagine.debug()
-    |> imagine.monochrome()
-    |> imagine.to_file("test/output/debug_test.png")
-
-  let assert Ok(info) = imagine.identify("test/output/debug_test.png")
-  assert info.format == imagine.Png
-}
-
 pub fn resize_contain_test() {
   // CSS contain: entire image visible, may have empty space
   let assert Ok(_) =

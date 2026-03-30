@@ -1,7 +1,6 @@
 import gleam/bit_array
 import gleam/float
 import gleam/int
-import gleam/io
 import gleam/list
 import gleam/result
 import gleam/string
@@ -154,6 +153,8 @@ pub opaque type Image {
   Image(source: Input, operations: List(ImageOperation))
 }
 
+/// Creates an image from a file path.
+///
 pub fn from_file(path: String) -> Image {
   Image(source: FileInput(path), operations: [])
 }
@@ -176,18 +177,35 @@ pub fn from_bits(bits: BitArray) -> Image {
   Image(source: BitArrayInput(bits), operations: [])
 }
 
+/// Resizes the image using the specified resize mode.
+/// Uses ImageMagick `-resize` option.
+///
 pub fn resize(image: Image, kind: Resize) -> Image {
   prepend_operation(image, Resize(kind))
 }
 
+/// Resizes the image to fit within the specified dimensions while preserving
+/// aspect ratio. The image will be equal to or smaller than the given width
+/// and height.
+/// Uses ImageMagick `-resize widthxheight` option.
+///
 pub fn resize_contain(image: Image, width: Int, height: Int) -> Image {
   resize(image, Fit(width, height))
 }
 
+/// Resizes the image to exactly the specified dimensions, ignoring aspect
+/// ratio. The image may be distorted.
+/// Uses ImageMagick `-resize widthxheight!` option.
+///
 pub fn resize_fill(image: Image, width: Int, height: Int) -> Image {
   resize(image, Exact(width, height))
 }
 
+/// Resizes the image to fill the specified dimensions, cropping overflow.
+/// The image will be resized to cover the entire area, and the cropping
+/// position is determined by the gravity parameter.
+/// Uses ImageMagick `-resize widthxheight^` and `-extent` options.
+///
 pub fn resize_cover(
   image: Image,
   width: Int,
@@ -251,6 +269,9 @@ pub fn filter(image: Image, filter: Filter) -> Image {
   prepend_operation(image, SetFilter(filter))
 }
 
+/// Crops or pads the image to the exact specified dimensions.
+/// Uses ImageMagick `-extent widthxheight` option.
+///
 pub fn extent(image: Image, width: Int, height: Int) -> Image {
   prepend_operation(
     image,
@@ -258,54 +279,97 @@ pub fn extent(image: Image, width: Int, height: Int) -> Image {
   )
 }
 
+/// Sets the colorspace of the image (e.g., "sRGB", "Gray", "CMYK").
+/// Uses ImageMagick `-colorspace` option.
+///
 pub fn colorspace(image: Image, kind: String) -> Image {
   prepend_operation(image, Colorspace(kind))
 }
 
+/// Converts the image to monochrome (black and white).
+/// Uses ImageMagick `-monochrome` option.
+///
 pub fn monochrome(image: Image) -> Image {
   prepend_operation(image, Monochrome)
 }
 
+/// Negates the colors in the image (color inversion).
+/// Uses ImageMagick `-negate` option.
+///
 pub fn negate(image: Image) -> Image {
   prepend_operation(image, Negate)
 }
 
+/// Applies a Gaussian blur to the image.
+/// Uses ImageMagick `-blur radius` option.
+///
 pub fn blur(image: Image, radius: Float) -> Image {
   prepend_operation(image, Blur(radius))
 }
 
+/// Automatically adjusts the image orientation based on EXIF data.
+/// Uses ImageMagick `-auto-orient` option.
+///
 pub fn auto_orient(image: Image) -> Image {
   prepend_operation(image, Custom("-auto-orient", ""))
 }
 
+/// Crops the image to the specified area in pixels.
+/// Respects the gravity setting for crop position.
+/// Uses ImageMagick `-crop pixels@` option.
+///
 pub fn crop_area(image: Image, pixels: Int) -> Image {
   prepend_operation(image, Crop(Area(pixels)))
 }
 
+/// Crops the image to a fixed width, keeping the full height.
+/// Respects the gravity setting for crop position.
+/// Uses ImageMagick `-crop widthx0` option.
+///
 pub fn crop_width(image: Image, pixels: Int) -> Image {
   prepend_operation(image, Crop(FixedWidth(pixels)))
 }
 
+/// Crops the image to fit within the specified dimensions while preserving
+/// aspect ratio, trimming excess from the larger dimension.
+/// Respects the gravity setting for crop position.
+/// Uses ImageMagick `-crop widthxheight` option.
+///
 pub fn contain(image: Image, width: Int, height: Int) -> Image {
   prepend_operation(image, Crop(Contain(width, height)))
 }
 
+/// Flips the image vertically (top becomes bottom).
+/// Uses ImageMagick `-flip` option.
+///
 pub fn flip(image: Image) -> Image {
   prepend_operation(image, Custom("-flip", ""))
 }
 
+/// Flops the image horizontally (left becomes right).
+/// Uses ImageMagick `-flop` option.
+///
 pub fn flop(image: Image) -> Image {
   prepend_operation(image, Flop)
 }
 
+/// Sharpens the image using an unsharp mask.
+/// Uses ImageMagick `-sharpen radius` option.
+///
 pub fn sharpen(image: Image, radius: Float) -> Image {
   prepend_operation(image, Sharpen(radius))
 }
 
+/// Strips all metadata (EXIF, ICC profiles, comments) from the image.
+/// Uses ImageMagick `-strip` option.
+///
 pub fn strip(image: Image) -> Image {
   prepend_operation(image, Strip)
 }
 
+/// Sets the gravity (position) for crop and extent operations.
+/// Used with `-gravity` option.
+///
 pub fn gravity(image: Image, gravity: Gravity) -> Image {
   prepend_operation(
     image,
@@ -339,6 +403,9 @@ pub type ImageInfo {
   )
 }
 
+/// Identifies image properties (format, dimensions, colorspace, etc.).
+/// Uses ImageMagick `identify` command.
+///
 pub fn identify(path: String) -> Result(ImageInfo, Error) {
   let cmd_result =
     shellout.command(
@@ -415,6 +482,9 @@ fn string_to_colorspace(input: String) -> Colorspace {
   }
 }
 
+/// Applies an ordered dithering pattern to the image.
+/// Uses ImageMagick `-ordered-dither` option.
+///
 pub fn ordered_dither(image: Image, kind: DitherPattern) -> Image {
   let pattern = case kind {
     Threshold -> "threshold"
@@ -440,18 +510,30 @@ pub fn ordered_dither(image: Image, kind: DitherPattern) -> Image {
   prepend_operation(image, OrderedDither(pattern))
 }
 
+/// Automatically adjusts the image's color levels.
+/// Uses ImageMagick `-auto-level` option.
+///
 pub fn auto_level(image: Image) -> Image {
   prepend_operation(image, Custom("-auto-level", ""))
 }
 
+/// Adds a custom ImageMagick option.
+///
 pub fn raw(image: Image, key: String, value: String) -> Image {
   prepend_operation(image, Custom(key, value:))
 }
 
+/// Sets the background color for operations like extent that may create
+/// empty areas.
+/// Uses ImageMagick `-background` option.
+///
 pub fn background(image: Image, color: String) -> Image {
   raw(image, "-background", color)
 }
 
+/// Extracts the alpha channel as a grayscale image.
+/// Uses ImageMagick `-alpha extract` option.
+///
 pub fn alpha_to_image(image: Image) -> Image {
   image
   |> raw("-alpha", "extract")
@@ -466,7 +548,9 @@ pub type Format {
   Keep
 }
 
-// returns the image as a BitArray in the specified format
+/// Outputs the image as a BitArray in the specified format.
+/// Uses ImageMagick output to stdout.
+///
 pub fn to_bits(image: Image, format: Format) -> Result(BitArray, Error) {
   execute_commands(
     image.source,
@@ -474,12 +558,6 @@ pub fn to_bits(image: Image, format: Format) -> Result(BitArray, Error) {
     StdoutOutput(format:),
   )
   |> result.map(bit_array.from_string)
-}
-
-pub fn debug(image: Image) -> Image {
-  let args = to_args(image, FileOutput("debug.png"))
-  io.println("magick " <> string.join(args, " "))
-  image
 }
 
 /// Returns the ImageMagick command that would be executed for this image pipeline.
@@ -503,7 +581,9 @@ pub fn to_command(image: Image, output_path: String) -> String {
   "magick " <> string.join(args, " ")
 }
 
-// write the image to an file. Make sure to include the format as an extension if you want a change
+/// Writes the image to a file.
+/// Uses ImageMagick convert command.
+///
 pub fn to_file(image: Image, path: String) -> Result(String, Error) {
   execute_commands(
     image.source,
@@ -647,7 +727,7 @@ fn filter_to_string(filter: Filter) -> String {
 
 fn geom_to_arg(geometry: CropGeometry) -> String {
   case geometry {
-    FixedWidth(w) -> int.to_string(w) <> "x0+0+0"
+    FixedWidth(w) -> int.to_string(w) <> "x0"
     FixedHeight(h) -> int.to_string(h)
     Scale(scale) -> float.to_string(scale) <> "%"
     Area(area) -> int.to_string(area) <> "@"
