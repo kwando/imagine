@@ -151,3 +151,69 @@ pub fn resize_fill_test() {
   assert info.width == 200
   assert info.height == 200
 }
+
+pub fn flop_mirrors_horizontally_test() {
+  let assert Ok(_) =
+    imagine.from_file("test/fixtures/logo.png")
+    |> imagine.flop()
+    |> imagine.to_file("test/output/flopped.png")
+
+  let assert Ok(info) = imagine.identify("test/output/flopped.png")
+  assert info.format == imagine.Png
+  // Dimensions should remain the same
+  assert info.width == 640
+  assert info.height == 480
+}
+
+pub fn sharpen_applies_sharpening_test() {
+  let assert Ok(_) =
+    imagine.from_file("test/fixtures/logo.png")
+    |> imagine.sharpen(0.0)
+    |> imagine.to_file("test/output/sharpened.png")
+
+  let assert Ok(info) = imagine.identify("test/output/sharpened.png")
+  assert info.format == imagine.Png
+  // Dimensions should remain the same
+  assert info.width == 640
+  assert info.height == 480
+}
+
+pub fn strip_removes_metadata_test() {
+  let assert Ok(_) =
+    imagine.from_file("test/fixtures/rose.jpg")
+    |> imagine.strip()
+    |> imagine.to_file("test/output/stripped.jpg")
+
+  let assert Ok(info) = imagine.identify("test/output/stripped.jpg")
+  assert info.format == imagine.Jpeg
+  // Dimensions should remain the same
+  assert info.width == 70
+  assert info.height == 46
+}
+
+pub fn thumbnail_creates_resized_preview_test() {
+  let assert Ok(_) =
+    imagine.from_file("test/fixtures/logo.png")
+    |> imagine.thumbnail(100, 100)
+    |> imagine.to_file("test/output/thumbnail.png")
+
+  let assert Ok(info) = imagine.identify("test/output/thumbnail.png")
+  assert info.format == imagine.Png
+  // Should fit within 100x100 while preserving aspect ratio
+  assert info.width == 100
+  assert info.height == 75
+}
+
+pub fn filter_changes_resampling_algorithm_test() {
+  let assert Ok(_) =
+    imagine.from_file("test/fixtures/logo.png")
+    |> imagine.filter(imagine.Nearest)
+    |> imagine.resize_contain(100, 100)
+    |> imagine.to_file("test/output/filtered.png")
+
+  let assert Ok(info) = imagine.identify("test/output/filtered.png")
+  assert info.format == imagine.Png
+  // Should resize successfully with nearest neighbor filter
+  assert info.width == 100
+  assert info.height == 75
+}

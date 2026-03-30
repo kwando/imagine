@@ -18,12 +18,17 @@ type Output {
 
 type ImageOperation {
   Resize(Resize)
+  Thumbnail(Int, Int)
+  SetFilter(Filter)
   Colorspace(String)
   ContrastStretch(String)
   OrderedDither(String)
   Monochrome
   Negate
   Blur(radius: Float)
+  Sharpen(radius: Float)
+  Flop
+  Strip
   Crop(CropGeometry)
   Custom(key: String, value: String)
 }
@@ -95,6 +100,41 @@ pub type Colorspace {
   Unknown(String)
 }
 
+/// Resampling filters control the algorithm used when resizing images.
+/// Different filters are better suited for different types of images.
+///
+pub type Filter {
+  /// High quality, sharp results with minimal artifacts.
+  /// Best for photographs and general-purpose resizing.
+  ///
+  Lanczos
+
+  /// Good balance of quality and processing speed.
+  /// A solid general-purpose choice when speed matters.
+  ///
+  Bicubic
+
+  /// Fast, pixelated results without interpolation.
+  /// Best for pixel art, icons, and images with hard edges.
+  ///
+  Nearest
+
+  /// Smooth results, particularly good for enlarging images.
+  /// Produces softer results than Lanczos when upscaling.
+  ///
+  Mitchell
+
+  /// Simple linear interpolation, fast but lower quality.
+  /// Good for simple downscaling when performance is critical.
+  ///
+  Triangle
+
+  /// Sharp edges and good detail preservation.
+  /// Excellent for text, line art, and images with sharp boundaries.
+  ///
+  Catrom
+}
+
 pub type Error {
   CannotParseFormat(String)
   CannotParseWidth
@@ -130,6 +170,57 @@ pub fn resize_cover(image, width, height, gravity_val: Gravity) {
   |> resize(Fill(width, height))
   |> gravity(gravity_val)
   |> extent(width, height)
+}
+
+/// Creates a thumbnail of the image.
+///
+/// This is more efficient than using `resize` as it automatically strips
+/// metadata (EXIF, ICC profiles, comments) before resizing, resulting in
+/// smaller memory usage and faster processing - especially useful for
+/// creating preview images from large source files.
+///
+/// The image will be resized to fit within the specified dimensions while
+/// preserving its aspect ratio. The resulting thumbnail dimensions will
+/// be equal to or smaller than the specified width and height.
+///
+/// ## Example
+///
+/// ```gleam
+/// from_file("large_photo.jpg")
+/// |> thumbnail(150, 150)
+/// |> to_file("preview.jpg")
+/// ```
+///
+pub fn thumbnail(image, width: Int, height: Int) {
+  prepend_operation(image, Thumbnail(width, height))
+}
+
+/// Sets the resampling filter for all subsequent resize operations.
+///
+/// This controls the algorithm used when resizing images. Different filters
+/// are better suited for different types of images:
+///
+/// - **Lanczos** (default) - High quality, sharp results. Best for photographs.
+/// - **Bicubic** - Good balance of quality and speed.
+/// - **Nearest** - Fast, pixelated results. Best for pixel art and icons.
+/// - **Mitchell** - Good for enlarging, produces smoother results than Lanczos.
+/// - **Triangle** - Simple linear interpolation. Faster but lower quality.
+/// - **Catrom** - Sharp edges, good for text and line art.
+///
+/// The filter setting applies to all subsequent `resize`, `resize_contain`,
+/// `resize_fill`, `resize_cover`, and `thumbnail` operations in the pipeline.
+///
+/// ## Example
+///
+/// ```gleam
+/// from_file("pixel_art.png")
+/// |> filter(Nearest)  // Preserve sharp edges
+/// |> resize_contain(100, 100)
+/// |> to_file("resized.png")
+/// ```
+///
+pub fn filter(image, filter: Filter) {
+  prepend_operation(image, SetFilter(filter))
 }
 
 pub fn extent(image, width, height) {
@@ -173,6 +264,18 @@ pub fn contain(image, width: Int, height: Int) {
 
 pub fn flip(image) {
   prepend_operation(image, Custom("-flip", ""))
+}
+
+pub fn flop(image) {
+  prepend_operation(image, Flop)
+}
+
+pub fn sharpen(image, radius: Float) {
+  prepend_operation(image, Sharpen(radius))
+}
+
+pub fn strip(image) {
+  prepend_operation(image, Strip)
 }
 
 pub fn gravity(image, gravity: Gravity) {
@@ -393,12 +496,20 @@ fn apply(input: Input, commands: List(ImageOperation), output: Output) {
 fn operation_to_args(operation: ImageOperation) {
   case operation {
     Resize(kind) -> ["-resize", resize_to_string(kind)]
+    Thumbnail(width, height) -> [
+      "-thumbnail",
+      int.to_string(width) <> "x" <> int.to_string(height),
+    ]
+    SetFilter(filter) -> ["-filter", filter_to_string(filter)]
     Colorspace(kind) -> ["-colorspace", kind]
     ContrastStretch(kind) -> ["-contrast-stretch", kind]
     Monochrome -> ["-monochrome"]
     OrderedDither(kind) -> ["-ordered-dither", kind]
     Negate -> ["-negate"]
     Blur(radius:) -> ["-blur", float.to_string(radius)]
+    Sharpen(radius:) -> ["-sharpen", float.to_string(radius)]
+    Flop -> ["-flop"]
+    Strip -> ["-strip"]
     Crop(geometry) -> ["-crop", geom_to_arg(geometry)]
     Custom(key:, value: "") -> [key]
     Custom(key:, value:) -> [key, value]
@@ -422,6 +533,17 @@ fn fit_mode_to_string(mode: FitMode) -> String {
     Any -> ""
     OnlyIfLarger -> ">"
     OnlyIfSmaller -> "<"
+  }
+}
+
+fn filter_to_string(filter: Filter) -> String {
+  case filter {
+    Lanczos -> "Lanczos"
+    Bicubic -> "Cubic"
+    Nearest -> "Point"
+    Mitchell -> "Mitchell"
+    Triangle -> "Triangle"
+    Catrom -> "Catrom"
   }
 }
 
