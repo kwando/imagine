@@ -1,13 +1,103 @@
 import gleeunit
+import imagine
+import simplifile
 
 pub fn main() -> Nil {
   gleeunit.main()
 }
 
-// gleeunit test functions end in `_test`
-pub fn hello_world_test() {
-  let name = "Joe"
-  let greeting = "Hello, " <> name <> "!"
+pub fn identify_reads_image_info_test() {
+  let assert Ok(info) = imagine.identify("test/fixtures/logo.png")
+  assert info.format == imagine.Png
+  assert info.width == 640
+  assert info.height == 480
+}
 
-  assert greeting == "Hello, Joe!"
+pub fn identify_reads_jpeg_test() {
+  let assert Ok(info) = imagine.identify("test/fixtures/rose.jpg")
+  assert info.format == imagine.Jpeg
+  assert info.width == 70
+  assert info.height == 46
+}
+
+pub fn identify_fails_for_nonexistent_file_test() {
+  case imagine.identify("test/fixtures/does_not_exist.png") {
+    Error(imagine.CommandFailed(_, _)) -> Nil
+    _ -> panic as "Should return CommandFailed error for non-existent file"
+  }
+}
+
+pub fn resize_changes_dimensions_test() {
+  let assert Ok(_) =
+    imagine.from_file("test/fixtures/logo.png")
+    |> imagine.resize("100x100")
+    |> imagine.to_file("test/output/resized.png")
+
+  let assert Ok(info) = imagine.identify("test/output/resized.png")
+  assert info.format == imagine.Png
+  assert info.width == 100
+  assert info.height == 75
+}
+
+pub fn format_conversion_test() {
+  let assert Ok(_) =
+    imagine.from_file("test/fixtures/logo.png")
+    |> imagine.to_file("test/output/converted.jpg")
+
+  let assert Ok(info) = imagine.identify("test/output/converted.jpg")
+  assert info.format == imagine.Jpeg
+}
+
+pub fn chain_multiple_operations_test() {
+  let assert Ok(_) =
+    imagine.from_file("test/fixtures/logo.png")
+    |> imagine.resize("200x200")
+    |> imagine.blur(1.0)
+    |> imagine.monochrome()
+    |> imagine.to_file("test/output/chained.png")
+
+  let assert Ok(info) = imagine.identify("test/output/chained.png")
+  assert info.format == imagine.Png
+  assert info.width == 200
+  assert info.height == 150
+}
+
+pub fn crop_width_test() {
+  let assert Ok(_) =
+    imagine.from_file("test/fixtures/logo.png")
+    |> imagine.crop_width(200)
+    |> imagine.to_file("test/output/cropped.png")
+
+  let assert Ok(info) = imagine.identify("test/output/cropped.png")
+  assert info.format == imagine.Png
+  assert info.width == 200
+}
+
+pub fn to_bits_returns_data_test() {
+  let assert Ok(bits) =
+    imagine.from_file("test/fixtures/rose.jpg")
+    |> imagine.resize("50x50")
+    |> imagine.to_bits(imagine.Png)
+
+  // Write bits to temporary file and verify it's a valid image
+  let temp_file = "test/output/from_bits.png"
+  let assert Ok(_) = simplifile.write_bits(bits, to: temp_file)
+
+  let assert Ok(info) = imagine.identify(temp_file)
+  assert info.format == imagine.Png
+  // Aspect ratio is preserved, so height will be 33 not 50
+  assert info.width == 50
+  assert info.height == 33
+}
+
+pub fn debug_does_not_break_chain_test() {
+  let assert Ok(_) =
+    imagine.from_file("test/fixtures/logo.png")
+    |> imagine.resize("100x100")
+    |> imagine.debug()
+    |> imagine.monochrome()
+    |> imagine.to_file("test/output/debug_test.png")
+
+  let assert Ok(info) = imagine.identify("test/output/debug_test.png")
+  assert info.format == imagine.Png
 }

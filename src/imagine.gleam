@@ -246,13 +246,10 @@ pub type Format {
   Keep
 }
 
+// returns the image as a BitArray in the specified format
 pub fn to_bits(image: Image, format: Format) {
-  case
-    apply(image.source, list.reverse(image.operations), StdoutOutput(format:))
-  {
-    Ok(bits) -> bit_array.from_string(bits) |> Ok
-    Error(_) -> Error(Nil)
-  }
+  apply(image.source, list.reverse(image.operations), StdoutOutput(format:))
+  |> result.map(bit_array.from_string)
 }
 
 pub fn debug(image) {
@@ -261,7 +258,8 @@ pub fn debug(image) {
   image
 }
 
-pub fn to_file(image: Image, path: String) {
+// write the image to an file. Make sure to include the format as an extension if you want a change
+pub fn to_file(image: Image, path: String) -> Result(String, Error) {
   apply(image.source, list.reverse(image.operations), FileOutput(path))
 }
 
@@ -297,7 +295,10 @@ fn apply(input: Input, commands: List(ImageOperation), output: Output) {
       [output_to_arg(output)],
     ])
 
-  shellout.command(run: "magick", with: args, in: ".", opt: [])
+  case shellout.command(run: "magick", with: args, in: ".", opt: []) {
+    Ok(data) -> Ok(data)
+    Error(#(exit_code, stderr)) -> Error(CommandFailed(exit_code:, stderr:))
+  }
 }
 
 fn operation_to_args(operation: ImageOperation) {
