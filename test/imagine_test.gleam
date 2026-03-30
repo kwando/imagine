@@ -30,7 +30,7 @@ pub fn identify_fails_for_nonexistent_file_test() {
 pub fn resize_changes_dimensions_test() {
   let assert Ok(_) =
     imagine.from_file("test/fixtures/logo.png")
-    |> imagine.resize("100x100")
+    |> imagine.resize(imagine.Fit(100, 100))
     |> imagine.to_file("test/output/resized.png")
 
   let assert Ok(info) = imagine.identify("test/output/resized.png")
@@ -51,7 +51,7 @@ pub fn format_conversion_test() {
 pub fn chain_multiple_operations_test() {
   let assert Ok(_) =
     imagine.from_file("test/fixtures/logo.png")
-    |> imagine.resize("200x200")
+    |> imagine.resize(imagine.Fit(200, 200))
     |> imagine.blur(1.0)
     |> imagine.monochrome()
     |> imagine.to_file("test/output/chained.png")
@@ -76,7 +76,7 @@ pub fn crop_width_test() {
 pub fn to_bits_returns_data_test() {
   let assert Ok(bits) =
     imagine.from_file("test/fixtures/rose.jpg")
-    |> imagine.resize("50x50")
+    |> imagine.resize(imagine.Fit(50, 50))
     |> imagine.to_bits(imagine.Png)
 
   // Write bits to temporary file and verify it's a valid image
@@ -93,11 +93,53 @@ pub fn to_bits_returns_data_test() {
 pub fn debug_does_not_break_chain_test() {
   let assert Ok(_) =
     imagine.from_file("test/fixtures/logo.png")
-    |> imagine.resize("100x100")
+    |> imagine.resize(imagine.Fit(100, 100))
     |> imagine.debug()
     |> imagine.monochrome()
     |> imagine.to_file("test/output/debug_test.png")
 
   let assert Ok(info) = imagine.identify("test/output/debug_test.png")
   assert info.format == imagine.Png
+}
+
+pub fn resize_contain_test() {
+  // CSS contain: entire image visible, may have empty space
+  let assert Ok(_) =
+    imagine.from_file("test/fixtures/logo.png")
+    |> imagine.resize_contain(200, 200)
+    |> imagine.to_file("test/output/contain.png")
+
+  let assert Ok(info) = imagine.identify("test/output/contain.png")
+  assert info.format == imagine.Png
+  // Aspect ratio preserved, so it fits within 200x200
+  assert info.width == 200
+  assert info.height == 150
+}
+
+pub fn resize_cover_test() {
+  // CSS cover: fills entire box, may crop
+  let assert Ok(_) =
+    imagine.from_file("test/fixtures/logo.png")
+    |> imagine.resize_cover(200, 200, imagine.Center)
+    |> imagine.to_file("test/output/cover.png")
+
+  let assert Ok(info) = imagine.identify("test/output/cover.png")
+  assert info.format == imagine.Png
+  // Exact dimensions because of extent
+  assert info.width == 200
+  assert info.height == 200
+}
+
+pub fn resize_fill_test() {
+  // CSS fill: stretch to fill, ignore aspect ratio
+  let assert Ok(_) =
+    imagine.from_file("test/fixtures/logo.png")
+    |> imagine.resize_fill(200, 200)
+    |> imagine.to_file("test/output/fill.png")
+
+  let assert Ok(info) = imagine.identify("test/output/fill.png")
+  assert info.format == imagine.Png
+  // Exact dimensions, aspect ratio ignored
+  assert info.width == 200
+  assert info.height == 200
 }

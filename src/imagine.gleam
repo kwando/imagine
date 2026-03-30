@@ -17,23 +17,39 @@ type Output {
 }
 
 type ImageOperation {
-  Resize(kind: String)
+  Resize(Resize)
   Colorspace(String)
   ContrastStretch(String)
   OrderedDither(String)
   Monochrome
   Negate
   Blur(radius: Float)
-  Crop(Geometry)
+  Crop(CropGeometry)
   Custom(key: String, value: String)
 }
 
-type Geometry {
+type CropGeometry {
   FixedWidth(Int)
   FixedHeight(Int)
   Contain(Int, Int)
   Scale(Float)
   Area(Int)
+}
+
+pub type Resize {
+  Fit(Int, Int)
+  Fill(Int, Int)
+  Exact(Int, Int)
+  Width(Int, FitMode)
+  Height(Int, FitMode)
+  Percent(Float)
+  ResizeArea(Int)
+}
+
+pub type FitMode {
+  Any
+  OnlyIfLarger
+  OnlyIfSmaller
 }
 
 pub type Gravity {
@@ -85,8 +101,30 @@ pub fn from_file(path: String) {
   Image(source: FileInput(path), operations: [])
 }
 
-pub fn resize(image, kind: String) {
+pub fn resize(image, kind: Resize) {
   prepend_operation(image, Resize(kind))
+}
+
+pub fn resize_contain(image, width, height) {
+  resize(image, Fit(width, height))
+}
+
+pub fn resize_fill(image, width, height) {
+  resize(image, Exact(width, height))
+}
+
+pub fn resize_cover(image, width, height, gravity_val: Gravity) {
+  image
+  |> resize(Fill(width, height))
+  |> gravity(gravity_val)
+  |> extent(width, height)
+}
+
+pub fn extent(image, width, height) {
+  prepend_operation(
+    image,
+    Custom("-extent", int.to_string(width) <> "x" <> int.to_string(height)),
+  )
 }
 
 pub fn colorspace(image, kind: String) {
@@ -303,7 +341,7 @@ fn apply(input: Input, commands: List(ImageOperation), output: Output) {
 
 fn operation_to_args(operation: ImageOperation) {
   case operation {
-    Resize(kind:) -> ["-resize", kind]
+    Resize(kind) -> ["-resize", resize_to_string(kind)]
     Colorspace(kind) -> ["-colorspace", kind]
     ContrastStretch(kind) -> ["-contrast-stretch", kind]
     Monochrome -> ["-monochrome"]
@@ -316,7 +354,27 @@ fn operation_to_args(operation: ImageOperation) {
   }
 }
 
-fn geom_to_arg(geometry: Geometry) {
+fn resize_to_string(resize: Resize) -> String {
+  case resize {
+    Fit(w, h) -> int.to_string(w) <> "x" <> int.to_string(h)
+    Fill(w, h) -> int.to_string(w) <> "x" <> int.to_string(h) <> "^"
+    Exact(w, h) -> int.to_string(w) <> "x" <> int.to_string(h) <> "!"
+    Width(w, mode) -> int.to_string(w) <> fit_mode_to_string(mode)
+    Height(h, mode) -> "x" <> int.to_string(h) <> fit_mode_to_string(mode)
+    Percent(p) -> float.to_string(p) <> "%"
+    ResizeArea(a) -> int.to_string(a) <> "@"
+  }
+}
+
+fn fit_mode_to_string(mode: FitMode) -> String {
+  case mode {
+    Any -> ""
+    OnlyIfLarger -> ">"
+    OnlyIfSmaller -> "<"
+  }
+}
+
+fn geom_to_arg(geometry: CropGeometry) {
   case geometry {
     FixedWidth(w) -> int.to_string(w) <> "x0+0+0"
     FixedHeight(h) -> int.to_string(h)
