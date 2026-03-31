@@ -925,6 +925,8 @@ pub fn normalize(image: Image) -> Image {
 /// |> image.to_file("output.jpg")
 /// ```
 ///
+/// For simple flags like `-flop` just leave the second argument as an empty string.
+///
 pub fn raw(image: Image, key: String, value: String) -> Image {
   prepend_operation(image, Custom(key, value:))
 }
