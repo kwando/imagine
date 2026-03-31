@@ -19,6 +19,7 @@ jobs:
           rebar3-version: "3"
           # elixir-version: "1"
       - run: sudo apt-get update && sudo apt-get install -y imagemagick
+      - run: sudo ln -sf /usr/bin/convert /usr/local/bin/magick
       - run: gleam deps download
       - run: gleam test
       - run: gleam format --check src test
