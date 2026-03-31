@@ -73,7 +73,7 @@ The policy is _not_ enabled by default.
 The repository includes `priv/policy.xml` - a whitelist-based ImageMagick security policy that:
 
 - **Blocks all formats by default** - Only explicitly allowed formats can be processed
-- **Allows safe formats**: PNG, JPEG, WebP, GIF, BMP, TIFF, AVIF, HEIC, PBM, PGM, PPM
+- **Allows safe formats**: PNG, JPEG, WebP, GIF, BMP, AVIF, PBM, PGM, PPM
 - **Blocks dangerous formats**: PDF, PostScript, MVG, MSL, SVG, XPS, WMF, EMF, and others
 - **Sets resource limits**: 256MB memory, 1GB disk, 30-second timeout, 16K max dimensions
 - **Disables dangerous features**: External command execution, file path expansion, clipboard access, module loading
@@ -159,7 +159,6 @@ gleam add alakazam
 image.from_file("photo.jpg")
 |> image.resize_contain(800, 600)
 |> image.to_file("resized.jpg")
-}
 ```
 
 ## Usage Examples
@@ -352,6 +351,12 @@ image.from_file("photo.jpg")
 - `ordered_dither(image, pattern)` - Apply ordered dithering patterns
 - `colors(image, num)` - Reduce colors (use with `dither()` for smooth results)
 - `posterize(image, levels)` - Reduce color levels per channel
+- `rotate(image, degrees)` - Rotate image by specified angle
+- `quality(image, percent)` - Set JPEG/WebP compression quality (1-100)
+- `sepia(image, threshold)` - Apply sepia tone effect
+- `gamma(image, value)` - Apply gamma correction
+- `brightness_contrast(image, brightness, contrast)` - Adjust brightness and contrast
+- `contrast_stretch(image, black_percent, white_percent)` - Enhance contrast by stretching intensity range
 
 ### Transformations
 
@@ -371,7 +376,7 @@ image.from_file("photo.jpg")
 - `auto_level(image)` - Auto-adjust levels
 - `normalize(image)` - Normalize (enhance contrast by stretching intensity range)
 - `background(image, color)` - Set background color
-- `alpha_to_image(image)` - Extract alpha channel
+- `alpha_to_image(image)` - Extract alpha channel as grayscale image
 
 ### Metadata
 
@@ -382,11 +387,13 @@ image.from_file("photo.jpg")
 
 - `to_command(image, output_path)` - Returns the ImageMagick command string without executing
 - `raw(image, key, value)` - Add custom ImageMagick arguments
+- `policy()` - List current ImageMagick security policy configuration
 
 ## Supported Formats
 
 - PNG
 - JPEG
+- WebP
 - BMP
 - PBM (Portable Bitmap)
 - PGM (Portable GrayMap)
@@ -407,4 +414,4 @@ Further documentation can be found at [https://hexdocs.pm/alakazam](https://hexd
 
 ## License
 
-This project is licensed under the Apache License 2.0.
+This project is licensed under the MIT License.
