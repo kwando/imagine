@@ -293,6 +293,7 @@ imagine.from_file("photo.jpg")
 
 - `colorspace(image, kind)` - Convert colorspace (accepts `Colorspace` type)
 - `auto_level(image)` - Auto-adjust levels
+- `normalize(image)` - Normalize (enhance contrast by stretching intensity range)
 - `background(image, color)` - Set background color
 - `alpha_to_image(image)` - Extract alpha channel
 

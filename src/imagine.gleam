@@ -125,6 +125,7 @@ type ImageOperation {
   Flip
   Gravity(Gravity)
   AutoLevel
+  Normalize
   AlphaExtract
   Background(colour.Colour)
   Rotate(degrees: Float)
@@ -906,6 +907,14 @@ pub fn auto_level(image: Image) -> Image {
   prepend_operation(image, AutoLevel)
 }
 
+/// Normalizes the image (enhances contrast by stretching the intensity range).
+///
+/// Uses ImageMagick `-normalize` option.
+///
+pub fn normalize(image: Image) -> Image {
+  prepend_operation(image, Normalize)
+}
+
 /// This is an escape hatch to add options that are unsupported by this library
 ///
 /// ## Example
@@ -1127,6 +1136,7 @@ fn operation_to_args(operation: ImageOperation) -> List(String) {
     Flip -> ["-flip"]
     Gravity(g) -> ["-gravity", gravity_to_string(g)]
     AutoLevel -> ["-auto-level"]
+    Normalize -> ["-normalize"]
     AlphaExtract -> ["-alpha", "extract"]
     Background(color) -> [
       "-background",
