@@ -617,6 +617,14 @@ pub fn contain(image: Image, width: Int, height: Int) -> Image {
   prepend_operation(image, Crop(Contain(width, height)))
 }
 
+/// Scales the image by the specified percentage.
+/// Respects the gravity setting for crop position.
+/// Uses ImageMagick `-crop scale%` option.
+///
+pub fn scale(image: Image, percent: Float) -> Image {
+  prepend_operation(image, Crop(Scale(percent)))
+}
+
 /// Flips the image vertically (top becomes bottom).
 /// Uses ImageMagick `-flip` option.
 ///
