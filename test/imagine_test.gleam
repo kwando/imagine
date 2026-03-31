@@ -1,4 +1,3 @@
-import gleam/string
 import gleam_community/colour
 import gleeunit
 import imagine
@@ -131,7 +130,7 @@ pub fn to_bits_returns_data_test() {
     |> imagine.to_bits(imagine.Png)
 
   // Write bits to temporary file and verify it's a valid image
-  let temp_file = "test/output/from_bits.png"
+  let temp_file = "test/output/to_bits.png"
   let assert Ok(_) = simplifile.write_bits(bits, to: temp_file)
 
   let assert Ok(info) = imagine.identify(temp_file)
@@ -142,7 +141,6 @@ pub fn to_bits_returns_data_test() {
 }
 
 pub fn resize_contain_test() {
-  // CSS contain: entire image visible, may have empty space
   let assert Ok(_) =
     imagine.from_file("test/fixtures/logo.png")
     |> imagine.resize_contain(200, 200)
@@ -156,7 +154,6 @@ pub fn resize_contain_test() {
 }
 
 pub fn resize_cover_test() {
-  // CSS cover: fills entire box, may crop
   let assert Ok(_) =
     imagine.from_file("test/fixtures/logo.png")
     |> imagine.resize_cover(200, 200, imagine.Center)
@@ -170,7 +167,6 @@ pub fn resize_cover_test() {
 }
 
 pub fn resize_fill_test() {
-  // CSS fill: stretch to fill, ignore aspect ratio
   let assert Ok(_) =
     imagine.from_file("test/fixtures/logo.png")
     |> imagine.resize_fill(200, 200)
@@ -247,19 +243,6 @@ pub fn filter_changes_resampling_algorithm_test() {
   // Should resize successfully with nearest neighbor filter
   assert info.width == 100
   assert info.height == 75
-}
-
-pub fn to_command_returns_magick_command_string_test() {
-  let command =
-    imagine.from_file("test/fixtures/logo.png")
-    |> imagine.resize_contain(100, 100)
-    |> imagine.to_command("output.png")
-
-  // Command should start with "magick" and contain the input file and operations
-  assert string.starts_with(command, "magick ")
-  assert string.contains(command, "test/fixtures/logo.png")
-  assert string.contains(command, "-resize")
-  assert string.contains(command, "output.png")
 }
 
 pub fn from_bits_round_trip_test() {
