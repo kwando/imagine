@@ -120,8 +120,14 @@ type ImageOperation {
   Flop
   Strip
   Crop(CropGeometry)
-  Custom(key: String, value: String)
+  Extent(Int, Int)
+  AutoOrient
+  Flip
+  Gravity(Gravity)
+  AutoLevel
+  AlphaExtract
   Background(colour.Colour)
+  Custom(key: String, value: String)
 }
 
 type CropGeometry {
@@ -503,10 +509,7 @@ pub fn filter(image: Image, filter: Filter) -> Image {
 /// Uses ImageMagick `-extent widthxheight` option.
 ///
 pub fn extent(image: Image, width: Int, height: Int) -> Image {
-  prepend_operation(
-    image,
-    Custom("-extent", int.to_string(width) <> "x" <> int.to_string(height)),
-  )
+  prepend_operation(image, Extent(width, height))
 }
 
 /// Sets the colorspace of the image.
@@ -587,7 +590,7 @@ pub fn blur(image: Image, radius: Float) -> Image {
 /// Uses ImageMagick `-auto-orient` option.
 ///
 pub fn auto_orient(image: Image) -> Image {
-  prepend_operation(image, Custom("-auto-orient", ""))
+  prepend_operation(image, AutoOrient)
 }
 
 /// Crops the image to the specified area in pixels.
@@ -635,7 +638,7 @@ pub fn scale(image: Image, percent: Float) -> Image {
 /// Uses ImageMagick `-flip` option.
 ///
 pub fn flip(image: Image) -> Image {
-  prepend_operation(image, Custom("-flip", ""))
+  prepend_operation(image, Flip)
 }
 
 /// Flops the image horizontally (left becomes right).
@@ -663,20 +666,7 @@ pub fn strip(image: Image) -> Image {
 /// Uses ImageMagick `-gravity` option.
 ///
 pub fn gravity(image: Image, gravity: Gravity) -> Image {
-  prepend_operation(
-    image,
-    Custom("-gravity", case gravity {
-      NorthWest -> "northwest"
-      North -> "north"
-      NorthEast -> "northeast"
-      West -> "west"
-      Center -> "center"
-      East -> "east"
-      SouthWest -> "southwest"
-      South -> "south"
-      SouthEast -> "southeast"
-    }),
-  )
+  prepend_operation(image, Gravity(gravity))
 }
 
 fn prepend_operation(image: Image, operation: ImageOperation) -> Image {
@@ -874,7 +864,7 @@ pub fn posterize(image: Image, levels: Int) -> Image {
 /// Uses ImageMagick `-auto-level` option.
 ///
 pub fn auto_level(image: Image) -> Image {
-  prepend_operation(image, Custom("-auto-level", ""))
+  prepend_operation(image, AutoLevel)
 }
 
 /// This is an escape hatch to add options that are unsupported by this library
@@ -903,8 +893,7 @@ pub fn background(image: Image, color: colour.Colour) -> Image {
 /// Uses ImageMagick `-alpha extract` option.
 ///
 pub fn alpha_to_image(image: Image) -> Image {
-  image
-  |> raw("-alpha", "extract")
+  prepend_operation(image, AlphaExtract)
 }
 
 /// Output image format, used with `to_bits/2` and inferred from the file
@@ -1074,12 +1063,32 @@ fn operation_to_args(operation: ImageOperation) -> List(String) {
     Flop -> ["-flop"]
     Strip -> ["-strip"]
     Crop(geometry) -> ["-crop", geom_to_arg(geometry)]
-    Custom(key:, value: "") -> [key]
-    Custom(key:, value:) -> [key, value]
+    Extent(w, h) -> ["-extent", int.to_string(w) <> "x" <> int.to_string(h)]
+    AutoOrient -> ["-auto-orient"]
+    Flip -> ["-flip"]
+    Gravity(g) -> ["-gravity", gravity_to_string(g)]
+    AutoLevel -> ["-auto-level"]
+    AlphaExtract -> ["-alpha", "extract"]
     Background(color) -> [
       "-background",
       colour.to_rgb_hex_string(color),
     ]
+    Custom(key:, value: "") -> [key]
+    Custom(key:, value:) -> [key, value]
+  }
+}
+
+fn gravity_to_string(gravity: Gravity) -> String {
+  case gravity {
+    NorthWest -> "northwest"
+    North -> "north"
+    NorthEast -> "northeast"
+    West -> "west"
+    Center -> "center"
+    East -> "east"
+    SouthWest -> "southwest"
+    South -> "south"
+    SouthEast -> "southeast"
   }
 }
 
