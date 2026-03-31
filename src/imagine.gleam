@@ -520,6 +520,15 @@ pub fn colorspace(image: Image, kind: Colorspace) -> Image {
   prepend_operation(image, Colorspace(colorspace_to_string(kind)))
 }
 
+/// Enhances the contrast of the image by stretching the range of intensity values.
+/// The `levels` parameter specifies how much to stretch, with common values like
+/// "2%x2%" stretching 2% of the darkest and lightest pixels.
+/// Uses ImageMagick `-contrast-stretch` option.
+///
+pub fn contrast_stretch(image: Image, levels: String) -> Image {
+  prepend_operation(image, ContrastStretch(levels))
+}
+
 /// Reduces the number of colors in the image to at most the specified number.
 ///
 /// This uses quantization to select the best colors to represent the image.
