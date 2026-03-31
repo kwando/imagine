@@ -8,13 +8,13 @@
 //// ## Quick Start
 ////
 //// ```gleam
-//// import imagine
+//// import alakazam/image
 ////
 //// pub fn main() {
 ////   // Basic resize
-////   imagine.from_file("input.jpg")
-////   |> imagine.resize_contain(800, 600)
-////   |> imagine.to_file("output.jpg")
+////   image.from_file("input.jpg")
+////   |> image.resize_contain(800, 600)
+////   |> image.to_file("output.jpg")
 //// }
 //// ```
 ////
@@ -29,11 +29,11 @@
 //// Chain multiple transformations that are lazily evaluated when written:
 ////
 //// ```gleam
-//// imagine.from_file("photo.jpg")
-//// |> imagine.resize_cover(1920, 1080, imagine.Center)
-//// |> imagine.sharpen(0.5)
-//// |> imagine.strip()  // Remove metadata
-//// |> imagine.to_file("hero-banner.jpg")
+//// image.from_file("photo.jpg")
+//// |> image.resize_cover(1920, 1080, image.Center)
+//// |> image.sharpen(0.5)
+//// |> image.strip()  // Remove metadata
+//// |> image.to_file("hero-banner.jpg")
 //// ```
 ////
 //// ## Color Reduction
@@ -42,16 +42,16 @@
 ////
 //// ```gleam
 //// // Retro 8-color look with smooth dithering
-//// imagine.from_file("photo.jpg")
-//// |> imagine.dither()
-//// |> imagine.colors(8)
-//// |> imagine.to_file("retro.png")
+//// image.from_file("photo.jpg")
+//// |> image.dither()
+//// |> image.colors(8)
+//// |> image.to_file("retro.png")
 ////
 //// // Visible color banding (poster effect)
-//// imagine.from_file("photo.jpg")
-//// |> imagine.dither()
-//// |> imagine.posterize(4)  // 4 levels per channel = 64 colors
-//// |> imagine.to_file("posterized.png")
+//// image.from_file("photo.jpg")
+//// |> image.dither()
+//// |> image.posterize(4)  // 4 levels per channel = 64 colors
+//// |> image.to_file("posterized.png")
 //// ```
 ////
 //// ## Debugging
@@ -60,9 +60,9 @@
 ////
 //// ```gleam
 //// let command =
-////   imagine.from_file("input.png")
-////   |> imagine.resize_contain(100, 100)
-////   |> imagine.to_command("output.png")
+////   image.from_file("input.png")
+////   |> image.resize_contain(100, 100)
+////   |> image.to_command("output.png")
 ////
 //// // command == "magick input.png -resize 100x100 output.png"
 //// ```
@@ -1004,7 +1004,7 @@ pub fn to_command(image: Image, output_path: String) -> String {
 
 /// Writes the image to a file.
 ///
-/// Uses ImageMagick convert command.
+/// Uses ImageMagick `magick` command.
 ///
 pub fn to_file(image: Image, path: String) -> Result(String, Error) {
   execute_commands(

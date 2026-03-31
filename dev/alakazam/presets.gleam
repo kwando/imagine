@@ -1,4 +1,4 @@
-//// Preset effects for the imagine library.
+//// Preset effects for the alakazam library.
 ////
 //// This module provides 35 ready-to-use image effect combinations organized
 //// into categories. Each preset is a pure function that takes an `Image` and
@@ -8,13 +8,13 @@
 //// ## Quick Start
 ////
 //// ```gleam
-//// import imagine
-//// import imagine/presets
+//// import alakazam/image
+//// import alakazam/presets
 ////
 //// pub fn main() {
-////   imagine.from_file("photo.jpg")
+////   image.from_file("photo.jpg")
 ////   |> presets.vintage_sepia()
-////   |> imagine.to_file("vintage.jpg")
+////   |> image.to_file("vintage.jpg")
 //// }
 //// ```
 ////
@@ -31,17 +31,17 @@
 ////
 //// ## Chaining Presets
 ////
-//// You can chain presets with other imagine operations:
+//// You can chain presets with other alakazam operations:
 ////
 //// ```gleam
-//// imagine.from_file("photo.jpg")
-//// |> imagine.resize_contain(800, 600)
+//// image.from_file("photo.jpg")
+//// |> image.resize_contain(800, 600)
 //// |> presets.film_noir()
-//// |> imagine.sharpen(0.5)
-//// |> imagine.to_file("output.jpg")
+//// |> image.sharpen(0.5)
+//// |> image.to_file("output.jpg")
 //// ```
 
-import imagine.{
+import alakazam/image.{
   type Image, Circles7x7Black, Halftone6x6Orthogonal, Halftone8x8Angled, Nearest,
   Ordered3x3, Percent,
 }
@@ -59,15 +59,15 @@ import imagine.{
 /// ## Example
 ///
 /// ```gleam
-/// imagine.from_file("photo.jpg")
+/// image.from_file("photo.jpg")
 /// |> presets.retro_game()
-/// |> imagine.to_file("retro.png")
+/// |> image.to_file("retro.png")
 /// ```
 ///
 pub fn retro_game(image: Image) -> Image {
   image
-  |> imagine.dither()
-  |> imagine.colors(8)
+  |> image.dither()
+  |> image.colors(8)
 }
 
 /// Applies a classic sepia tone effect mimicking aged photographs.
@@ -79,17 +79,17 @@ pub fn retro_game(image: Image) -> Image {
 /// ## Example
 ///
 /// ```gleam
-/// imagine.from_file("portrait.jpg")
+/// image.from_file("portrait.jpg")
 /// |> presets.vintage_sepia()
-/// |> imagine.to_file("vintage.jpg")
+/// |> image.to_file("vintage.jpg")
 /// ```
 ///
 pub fn vintage_sepia(image: Image) -> Image {
   image
-  |> imagine.sepia(80.0)
-  |> imagine.contrast_stretch(2.0, 2.0)
-  |> imagine.brightness_contrast(-10, 10)
-  |> imagine.strip()
+  |> image.sepia(80.0)
+  |> image.contrast_stretch(2.0, 2.0)
+  |> image.brightness_contrast(-10, 10)
+  |> image.strip()
 }
 
 /// Creates a 1990s web aesthetic with limited color palette.
@@ -100,15 +100,15 @@ pub fn vintage_sepia(image: Image) -> Image {
 /// ## Example
 ///
 /// ```gleam
-/// imagine.from_file("banner.jpg")
+/// image.from_file("banner.jpg")
 /// |> presets.web_90s()
-/// |> imagine.to_file("retro_web.gif")
+/// |> image.to_file("retro_web.gif")
 /// ```
 ///
 pub fn web_90s(image: Image) -> Image {
   image
-  |> imagine.dither()
-  |> imagine.colors(16)
+  |> image.dither()
+  |> image.colors(16)
 }
 
 /// Simulates a halftone newspaper print effect.
@@ -119,16 +119,16 @@ pub fn web_90s(image: Image) -> Image {
 /// ## Example
 ///
 /// ```gleam
-/// imagine.from_file("photo.jpg")
+/// image.from_file("photo.jpg")
 /// |> presets.newspaper()
-/// |> imagine.to_file("newspaper.jpg")
+/// |> image.to_file("newspaper.jpg")
 /// ```
 ///
 pub fn newspaper(image: Image) -> Image {
   image
-  |> imagine.colorspace(imagine.Gray)
-  |> imagine.ordered_dither(Halftone8x8Angled)
-  |> imagine.contrast_stretch(1.0, 1.0)
+  |> image.colorspace(image.Gray)
+  |> image.ordered_dither(Halftone8x8Angled)
+  |> image.contrast_stretch(1.0, 1.0)
 }
 
 /// Recreates the degraded quality of VHS tape recordings.
@@ -139,17 +139,17 @@ pub fn newspaper(image: Image) -> Image {
 /// ## Example
 ///
 /// ```gleam
-/// imagine.from_file("video_frame.jpg")
+/// image.from_file("video_frame.jpg")
 /// |> presets.vhs()
-/// |> imagine.to_file("vhs.jpg")
+/// |> image.to_file("vhs.jpg")
 /// ```
 ///
 pub fn vhs(image: Image) -> Image {
   image
-  |> imagine.brightness_contrast(-5, -15)
-  |> imagine.gamma(1.2)
-  |> imagine.posterize(6)
-  |> imagine.blur(0.5)
+  |> image.brightness_contrast(-5, -15)
+  |> image.gamma(1.2)
+  |> image.posterize(6)
+  |> image.blur(0.5)
 }
 
 // ============================================================================
@@ -164,16 +164,16 @@ pub fn vhs(image: Image) -> Image {
 /// ## Example
 ///
 /// ```gleam
-/// imagine.from_file("portrait.jpg")
+/// image.from_file("portrait.jpg")
 /// |> presets.pop_art()
-/// |> imagine.to_file("pop_art.jpg")
+/// |> image.to_file("pop_art.jpg")
 /// ```
 ///
 pub fn pop_art(image: Image) -> Image {
   image
-  |> imagine.posterize(3)
-  |> imagine.brightness_contrast(0, 30)
-  |> imagine.dither()
+  |> image.posterize(3)
+  |> image.brightness_contrast(0, 30)
+  |> image.dither()
 }
 
 /// Transforms photos into pencil sketch drawings.
@@ -184,17 +184,17 @@ pub fn pop_art(image: Image) -> Image {
 /// ## Example
 ///
 /// ```gleam
-/// imagine.from_file("landscape.jpg")
+/// image.from_file("landscape.jpg")
 /// |> presets.sketch()
-/// |> imagine.to_file("sketch.jpg")
+/// |> image.to_file("sketch.jpg")
 /// ```
 ///
 pub fn sketch(image: Image) -> Image {
   image
-  |> imagine.colorspace(imagine.Gray)
-  |> imagine.sharpen(2.0)
-  |> imagine.auto_level()
-  |> imagine.brightness_contrast(10, 40)
+  |> image.colorspace(image.Gray)
+  |> image.sharpen(2.0)
+  |> image.auto_level()
+  |> image.brightness_contrast(10, 40)
 }
 
 /// Creates a soft, ethereal, dream-like atmosphere.
@@ -206,16 +206,16 @@ pub fn sketch(image: Image) -> Image {
 /// ## Example
 ///
 /// ```gleam
-/// imagine.from_file("portrait.jpg")
+/// image.from_file("portrait.jpg")
 /// |> presets.dreamy()
-/// |> imagine.to_file("dreamy.jpg")
+/// |> image.to_file("dreamy.jpg")
 /// ```
 ///
 pub fn dreamy(image: Image) -> Image {
   image
-  |> imagine.blur(1.5)
-  |> imagine.brightness_contrast(15, -10)
-  |> imagine.gamma(1.1)
+  |> image.blur(1.5)
+  |> image.brightness_contrast(15, -10)
+  |> image.gamma(1.1)
 }
 
 /// Produces a bright, airy high-key lighting effect.
@@ -226,16 +226,16 @@ pub fn dreamy(image: Image) -> Image {
 /// ## Example
 ///
 /// ```gleam
-/// imagine.from_file("product.jpg")
+/// image.from_file("product.jpg")
 /// |> presets.high_key()
-/// |> imagine.to_file("high_key.jpg")
+/// |> image.to_file("high_key.jpg")
 /// ```
 ///
 pub fn high_key(image: Image) -> Image {
   image
-  |> imagine.brightness_contrast(20, -20)
-  |> imagine.gamma(1.3)
-  |> imagine.normalize()
+  |> image.brightness_contrast(20, -20)
+  |> image.gamma(1.3)
+  |> image.normalize()
 }
 
 /// Creates dramatic black and white film noir cinematography.
@@ -246,16 +246,16 @@ pub fn high_key(image: Image) -> Image {
 /// ## Example
 ///
 /// ```gleam
-/// imagine.from_file("portrait.jpg")
+/// image.from_file("portrait.jpg")
 /// |> presets.film_noir()
-/// |> imagine.to_file("noir.jpg")
+/// |> image.to_file("noir.jpg")
 /// ```
 ///
 pub fn film_noir(image: Image) -> Image {
   image
-  |> imagine.colorspace(imagine.Gray)
-  |> imagine.brightness_contrast(-5, 40)
-  |> imagine.gamma(0.9)
+  |> image.colorspace(image.Gray)
+  |> image.brightness_contrast(-5, 40)
+  |> image.gamma(0.9)
 }
 
 // ============================================================================
@@ -270,16 +270,16 @@ pub fn film_noir(image: Image) -> Image {
 /// ## Example
 ///
 /// ```gleam
-/// imagine.from_file("cityscape.jpg")
+/// image.from_file("cityscape.jpg")
 /// |> presets.inverted_neon()
-/// |> imagine.to_file("neon.jpg")
+/// |> image.to_file("neon.jpg")
 /// ```
 ///
 pub fn inverted_neon(image: Image) -> Image {
   image
-  |> imagine.negate()
-  |> imagine.posterize(4)
-  |> imagine.brightness_contrast(0, 30)
+  |> image.negate()
+  |> image.posterize(4)
+  |> image.brightness_contrast(0, 30)
 }
 
 /// Transforms photos into retro pixel art sprites.
@@ -290,19 +290,19 @@ pub fn inverted_neon(image: Image) -> Image {
 /// ## Example
 ///
 /// ```gleam
-/// imagine.from_file("character.jpg")
+/// image.from_file("character.jpg")
 /// |> presets.pixel_art()
-/// |> imagine.to_file("sprite.png")
+/// |> image.to_file("sprite.png")
 /// ```
 ///
 pub fn pixel_art(image: Image) -> Image {
   image
-  |> imagine.filter(Nearest)
-  |> imagine.resize(Percent(25.0))
-  |> imagine.dither()
-  |> imagine.colors(16)
-  |> imagine.filter(Nearest)
-  |> imagine.resize(Percent(400.0))
+  |> image.filter(Nearest)
+  |> image.resize(Percent(25.0))
+  |> image.dither()
+  |> image.colors(16)
+  |> image.filter(Nearest)
+  |> image.resize(Percent(400.0))
 }
 
 /// Creates a high-contrast futuristic cyberpunk aesthetic.
@@ -313,16 +313,16 @@ pub fn pixel_art(image: Image) -> Image {
 /// ## Example
 ///
 /// ```gleam
-/// imagine.from_file("city_night.jpg")
+/// image.from_file("city_night.jpg")
 /// |> presets.cyberpunk()
-/// |> imagine.to_file("cyberpunk.jpg")
+/// |> image.to_file("cyberpunk.jpg")
 /// ```
 ///
 pub fn cyberpunk(image: Image) -> Image {
   image
-  |> imagine.brightness_contrast(10, 35)
-  |> imagine.gamma(0.85)
-  |> imagine.posterize(5)
+  |> image.brightness_contrast(10, 35)
+  |> image.gamma(0.85)
+  |> image.posterize(5)
 }
 
 /// Simulates thermal imaging camera false-color display.
@@ -333,17 +333,17 @@ pub fn cyberpunk(image: Image) -> Image {
 /// ## Example
 ///
 /// ```gleam
-/// imagine.from_file("building.jpg")
+/// image.from_file("building.jpg")
 /// |> presets.thermal()
-/// |> imagine.to_file("thermal.jpg")
+/// |> image.to_file("thermal.jpg")
 /// ```
 ///
 pub fn thermal(image: Image) -> Image {
   image
-  |> imagine.colorspace(imagine.Gray)
-  |> imagine.posterize(8)
-  |> imagine.negate()
-  |> imagine.auto_level()
+  |> image.colorspace(image.Gray)
+  |> image.posterize(8)
+  |> image.negate()
+  |> image.auto_level()
 }
 
 /// Produces a digital glitch art aesthetic.
@@ -354,16 +354,16 @@ pub fn thermal(image: Image) -> Image {
 /// ## Example
 ///
 /// ```gleam
-/// imagine.from_file("photo.jpg")
+/// image.from_file("photo.jpg")
 /// |> presets.glitch()
-/// |> imagine.to_file("glitched.jpg")
+/// |> image.to_file("glitched.jpg")
 /// ```
 ///
 pub fn glitch(image: Image) -> Image {
   image
-  |> imagine.posterize(2)
-  |> imagine.ordered_dither(Circles7x7Black)
-  |> imagine.brightness_contrast(0, 20)
+  |> image.posterize(2)
+  |> image.ordered_dither(Circles7x7Black)
+  |> image.brightness_contrast(0, 20)
 }
 
 // ============================================================================
@@ -378,14 +378,14 @@ pub fn glitch(image: Image) -> Image {
 /// ## Example
 ///
 /// ```gleam
-/// imagine.from_file("landscape.jpg")
+/// image.from_file("landscape.jpg")
 /// |> presets.black_and_white()
-/// |> imagine.to_file("bw.jpg")
+/// |> image.to_file("bw.jpg")
 /// ```
 ///
 pub fn black_and_white(image: Image) -> Image {
   image
-  |> imagine.colorspace(imagine.Gray)
+  |> image.colorspace(image.Gray)
 }
 
 /// Dramatic high-contrast black and white.
@@ -396,16 +396,16 @@ pub fn black_and_white(image: Image) -> Image {
 /// ## Example
 ///
 /// ```gleam
-/// imagine.from_file("portrait.jpg")
+/// image.from_file("portrait.jpg")
 /// |> presets.high_contrast_bw()
-/// |> imagine.to_file("high_contrast.jpg")
+/// |> image.to_file("high_contrast.jpg")
 /// ```
 ///
 pub fn high_contrast_bw(image: Image) -> Image {
   image
-  |> imagine.colorspace(imagine.Gray)
-  |> imagine.brightness_contrast(0, 40)
-  |> imagine.auto_level()
+  |> image.colorspace(image.Gray)
+  |> image.brightness_contrast(0, 40)
+  |> image.auto_level()
 }
 
 /// Gentle, soft grayscale conversion with muted contrast.
@@ -416,16 +416,16 @@ pub fn high_contrast_bw(image: Image) -> Image {
 /// ## Example
 ///
 /// ```gleam
-/// imagine.from_file("portrait.jpg")
+/// image.from_file("portrait.jpg")
 /// |> presets.soft_grayscale()
-/// |> imagine.to_file("soft_bw.jpg")
+/// |> image.to_file("soft_bw.jpg")
 /// ```
 ///
 pub fn soft_grayscale(image: Image) -> Image {
   image
-  |> imagine.colorspace(imagine.Gray)
-  |> imagine.gamma(1.2)
-  |> imagine.brightness_contrast(5, -10)
+  |> image.colorspace(image.Gray)
+  |> image.gamma(1.2)
+  |> image.brightness_contrast(5, -10)
 }
 
 /// Pure black and white (1-bit) with dithering.
@@ -436,14 +436,14 @@ pub fn soft_grayscale(image: Image) -> Image {
 /// ## Example
 ///
 /// ```gleam
-/// imagine.from_file("logo.jpg")
+/// image.from_file("logo.jpg")
 /// |> presets.monochrome_dithered()
-/// |> imagine.to_file("logo.pbm")
+/// |> image.to_file("logo.pbm")
 /// ```
 ///
 pub fn monochrome_dithered(image: Image) -> Image {
   image
-  |> imagine.monochrome()
+  |> image.monochrome()
 }
 
 // ============================================================================
@@ -458,15 +458,15 @@ pub fn monochrome_dithered(image: Image) -> Image {
 /// ## Example
 ///
 /// ```gleam
-/// imagine.from_file("sunset.jpg")
+/// image.from_file("sunset.jpg")
 /// |> presets.warm_glow()
-/// |> imagine.to_file("warm.jpg")
+/// |> image.to_file("warm.jpg")
 /// ```
 ///
 pub fn warm_glow(image: Image) -> Image {
   image
-  |> imagine.gamma(1.1)
-  |> imagine.brightness_contrast(10, 5)
+  |> image.gamma(1.1)
+  |> image.brightness_contrast(10, 5)
 }
 
 /// Applies cool, blue-shifted tones for a somber mood.
@@ -477,15 +477,15 @@ pub fn warm_glow(image: Image) -> Image {
 /// ## Example
 ///
 /// ```gleam
-/// imagine.from_file("winter.jpg")
+/// image.from_file("winter.jpg")
 /// |> presets.cool_tone()
-/// |> imagine.to_file("cool.jpg")
+/// |> image.to_file("cool.jpg")
 /// ```
 ///
 pub fn cool_tone(image: Image) -> Image {
   image
-  |> imagine.gamma(0.95)
-  |> imagine.brightness_contrast(-5, 10)
+  |> image.gamma(0.95)
+  |> image.brightness_contrast(-5, 10)
 }
 
 /// Creates a washed-out, low-saturation faded look.
@@ -496,15 +496,15 @@ pub fn cool_tone(image: Image) -> Image {
 /// ## Example
 ///
 /// ```gleam
-/// imagine.from_file("photo.jpg")
+/// image.from_file("photo.jpg")
 /// |> presets.faded()
-/// |> imagine.to_file("faded.jpg")
+/// |> image.to_file("faded.jpg")
 /// ```
 ///
 pub fn faded(image: Image) -> Image {
   image
-  |> imagine.brightness_contrast(15, -25)
-  |> imagine.gamma(1.15)
+  |> image.brightness_contrast(15, -25)
+  |> image.gamma(1.15)
 }
 
 /// Enhances colors and contrast for a vibrant, punchy look.
@@ -515,16 +515,16 @@ pub fn faded(image: Image) -> Image {
 /// ## Example
 ///
 /// ```gleam
-/// imagine.from_file("landscape.jpg")
+/// image.from_file("landscape.jpg")
 /// |> presets.vibrant()
-/// |> imagine.to_file("vibrant.jpg")
+/// |> image.to_file("vibrant.jpg")
 /// ```
 ///
 pub fn vibrant(image: Image) -> Image {
   image
-  |> imagine.normalize()
-  |> imagine.brightness_contrast(5, 25)
-  |> imagine.sharpen(0.4)
+  |> image.normalize()
+  |> image.brightness_contrast(5, 25)
+  |> image.sharpen(0.4)
 }
 
 /// Mutes colors for a subtle, desaturated aesthetic.
@@ -535,15 +535,15 @@ pub fn vibrant(image: Image) -> Image {
 /// ## Example
 ///
 /// ```gleam
-/// imagine.from_file("product.jpg")
+/// image.from_file("product.jpg")
 /// |> presets.desaturated()
-/// |> imagine.to_file("muted.jpg")
+/// |> image.to_file("muted.jpg")
 /// ```
 ///
 pub fn desaturated(image: Image) -> Image {
   image
-  |> imagine.brightness_contrast(0, -20)
-  |> imagine.gamma(1.05)
+  |> image.brightness_contrast(0, -20)
+  |> image.gamma(1.05)
 }
 
 // ============================================================================
@@ -558,16 +558,16 @@ pub fn desaturated(image: Image) -> Image {
 /// ## Example
 ///
 /// ```gleam
-/// imagine.from_file("game_scene.jpg")
+/// image.from_file("game_scene.jpg")
 /// |> presets.gameboy()
-/// |> imagine.to_file("gameboy.png")
+/// |> image.to_file("gameboy.png")
 /// ```
 ///
 pub fn gameboy(image: Image) -> Image {
   image
-  |> imagine.colorspace(imagine.Gray)
-  |> imagine.posterize(2)
-  |> imagine.dither()
+  |> image.colorspace(image.Gray)
+  |> image.posterize(2)
+  |> image.dither()
 }
 
 /// Applies the 4-color CGA (Color Graphics Adapter) palette.
@@ -578,17 +578,17 @@ pub fn gameboy(image: Image) -> Image {
 /// ## Example
 ///
 /// ```gleam
-/// imagine.from_file("scene.jpg")
+/// image.from_file("scene.jpg")
 /// |> presets.cga()
-/// |> imagine.to_file("cga.png")
+/// |> image.to_file("cga.png")
 /// ```
 ///
 pub fn cga(image: Image) -> Image {
   image
-  |> imagine.dither()
-  |> imagine.colors(4)
-  |> imagine.posterize(2)
-  |> imagine.brightness_contrast(0, 30)
+  |> image.dither()
+  |> image.colors(4)
+  |> image.posterize(2)
+  |> image.brightness_contrast(0, 30)
 }
 
 /// Creates a blocky teletext/videotex aesthetic.
@@ -599,18 +599,18 @@ pub fn cga(image: Image) -> Image {
 /// ## Example
 ///
 /// ```gleam
-/// imagine.from_file("image.jpg")
+/// image.from_file("image.jpg")
 /// |> presets.teletext()
-/// |> imagine.to_file("teletext.png")
+/// |> image.to_file("teletext.png")
 /// ```
 ///
 pub fn teletext(image: Image) -> Image {
   image
-  |> imagine.filter(Nearest)
-  |> imagine.resize(Percent(20.0))
-  |> imagine.colors(8)
-  |> imagine.filter(Nearest)
-  |> imagine.resize(Percent(500.0))
+  |> image.filter(Nearest)
+  |> image.resize(Percent(20.0))
+  |> image.colors(8)
+  |> image.filter(Nearest)
+  |> image.resize(Percent(500.0))
 }
 
 /// Mimics the Commodore 64 16-color palette aesthetic.
@@ -621,17 +621,17 @@ pub fn teletext(image: Image) -> Image {
 /// ## Example
 ///
 /// ```gleam
-/// imagine.from_file("retro_scene.jpg")
+/// image.from_file("retro_scene.jpg")
 /// |> presets.commodore64()
-/// |> imagine.to_file("c64.png")
+/// |> image.to_file("c64.png")
 /// ```
 ///
 pub fn commodore64(image: Image) -> Image {
   image
-  |> imagine.dither()
-  |> imagine.colors(16)
-  |> imagine.posterize(4)
-  |> imagine.brightness_contrast(5, 15)
+  |> image.dither()
+  |> image.colors(16)
+  |> image.posterize(4)
+  |> image.brightness_contrast(5, 15)
 }
 
 // ============================================================================
@@ -646,15 +646,15 @@ pub fn commodore64(image: Image) -> Image {
 /// ## Example
 ///
 /// ```gleam
-/// imagine.from_file("photo.jpg")
+/// image.from_file("photo.jpg")
 /// |> presets.grainy()
-/// |> imagine.to_file("grainy.jpg")
+/// |> image.to_file("grainy.jpg")
 /// ```
 ///
 pub fn grainy(image: Image) -> Image {
   image
-  |> imagine.ordered_dither(Ordered3x3)
-  |> imagine.brightness_contrast(0, 5)
+  |> image.ordered_dither(Ordered3x3)
+  |> image.brightness_contrast(0, 5)
 }
 
 /// Creates ultra-smooth, denoised appearance.
@@ -665,16 +665,16 @@ pub fn grainy(image: Image) -> Image {
 /// ## Example
 ///
 /// ```gleam
-/// imagine.from_file("noisy_photo.jpg")
+/// image.from_file("noisy_photo.jpg")
 /// |> presets.smooth()
-/// |> imagine.to_file("smooth.jpg")
+/// |> image.to_file("smooth.jpg")
 /// ```
 ///
 pub fn smooth(image: Image) -> Image {
   image
-  |> imagine.blur(0.5)
-  |> imagine.normalize()
-  |> imagine.sharpen(0.2)
+  |> image.blur(0.5)
+  |> image.normalize()
+  |> image.sharpen(0.2)
 }
 
 /// Applies color halftone printing effect.
@@ -685,15 +685,15 @@ pub fn smooth(image: Image) -> Image {
 /// ## Example
 ///
 /// ```gleam
-/// imagine.from_file("photo.jpg")
+/// image.from_file("photo.jpg")
 /// |> presets.halftone_color()
-/// |> imagine.to_file("halftone.jpg")
+/// |> image.to_file("halftone.jpg")
 /// ```
 ///
 pub fn halftone_color(image: Image) -> Image {
   image
-  |> imagine.ordered_dither(Halftone6x6Orthogonal)
-  |> imagine.brightness_contrast(0, 10)
+  |> image.ordered_dither(Halftone6x6Orthogonal)
+  |> image.brightness_contrast(0, 10)
 }
 
 // ============================================================================
@@ -708,17 +708,17 @@ pub fn halftone_color(image: Image) -> Image {
 /// ## Example
 ///
 /// ```gleam
-/// imagine.from_file("portrait.jpg")
+/// image.from_file("portrait.jpg")
 /// |> presets.comic_book()
-/// |> imagine.to_file("comic.jpg")
+/// |> image.to_file("comic.jpg")
 /// ```
 ///
 pub fn comic_book(image: Image) -> Image {
   image
-  |> imagine.posterize(5)
-  |> imagine.sharpen(1.0)
-  |> imagine.brightness_contrast(0, 35)
-  |> imagine.auto_level()
+  |> image.posterize(5)
+  |> image.sharpen(1.0)
+  |> image.brightness_contrast(0, 35)
+  |> image.auto_level()
 }
 
 /// Simulates soft watercolor painting.
@@ -729,16 +729,16 @@ pub fn comic_book(image: Image) -> Image {
 /// ## Example
 ///
 /// ```gleam
-/// imagine.from_file("landscape.jpg")
+/// image.from_file("landscape.jpg")
 /// |> presets.watercolor()
-/// |> imagine.to_file("watercolor.jpg")
+/// |> image.to_file("watercolor.jpg")
 /// ```
 ///
 pub fn watercolor(image: Image) -> Image {
   image
-  |> imagine.blur(2.0)
-  |> imagine.posterize(8)
-  |> imagine.brightness_contrast(10, -15)
+  |> image.blur(2.0)
+  |> image.posterize(8)
+  |> image.brightness_contrast(10, -15)
 }
 
 /// Creates textured oil painting effect.
@@ -749,16 +749,16 @@ pub fn watercolor(image: Image) -> Image {
 /// ## Example
 ///
 /// ```gleam
-/// imagine.from_file("portrait.jpg")
+/// image.from_file("portrait.jpg")
 /// |> presets.oil_painting()
-/// |> imagine.to_file("oil.jpg")
+/// |> image.to_file("oil.jpg")
 /// ```
 ///
 pub fn oil_painting(image: Image) -> Image {
   image
-  |> imagine.posterize(6)
-  |> imagine.blur(1.0)
-  |> imagine.brightness_contrast(5, 15)
+  |> image.posterize(6)
+  |> image.blur(1.0)
+  |> image.brightness_contrast(5, 15)
 }
 
 /// Produces charcoal sketch drawing effect.
@@ -769,14 +769,14 @@ pub fn oil_painting(image: Image) -> Image {
 /// ## Example
 ///
 /// ```gleam
-/// imagine.from_file("portrait.jpg")
+/// image.from_file("portrait.jpg")
 /// |> presets.charcoal()
-/// |> imagine.to_file("charcoal.jpg")
+/// |> image.to_file("charcoal.jpg")
 /// ```
 ///
 pub fn charcoal(image: Image) -> Image {
   image
-  |> imagine.colorspace(imagine.Gray)
-  |> imagine.sharpen(3.0)
-  |> imagine.brightness_contrast(-10, 50)
+  |> image.colorspace(image.Gray)
+  |> image.sharpen(3.0)
+  |> image.brightness_contrast(-10, 50)
 }

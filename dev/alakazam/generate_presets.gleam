@@ -1,10 +1,10 @@
+import alakazam/image
+import alakazam/presets
 import gleam/int
 import gleam/io
 import gleam/list
 import gleam/result
 import gleam/string
-import imagine
-import imagine/presets
 import simplifile
 
 pub fn main() {
@@ -14,7 +14,7 @@ pub fn main() {
 
   io.println("🎨 Using default image: " <> input_path)
   io.println(
-    "💡 To use a different image, edit dev/imagine/generate_presets.gleam",
+    "💡 To use a different image, edit dev/alakazam/generate_presets.gleam",
   )
   io.println("")
 
@@ -85,10 +85,10 @@ fn generate_all_presets(input_path: String) {
       io.print("  Generating " <> name <> "... ")
 
       let result =
-        imagine.from_file(input_path)
-        |> imagine.resize_contain(640, 480)
+        image.from_file(input_path)
+        |> image.resize_contain(640, 480)
         |> preset_fn()
-        |> imagine.to_file(output_path)
+        |> image.to_file(output_path)
 
       case result {
         Ok(_) -> {
@@ -134,7 +134,7 @@ fn generate_all_presets(input_path: String) {
 
 fn generate_gallery(
   output_dir: String,
-  presets: List(#(String, fn(imagine.Image) -> imagine.Image)),
+  presets: List(#(String, fn(image.Image) -> image.Image)),
 ) -> Result(Nil, Nil) {
   let html = build_gallery_html(presets)
   let gallery_path = output_dir <> "/gallery.html"
@@ -145,7 +145,7 @@ fn generate_gallery(
 }
 
 fn build_gallery_html(
-  presets: List(#(String, fn(imagine.Image) -> imagine.Image)),
+  presets: List(#(String, fn(image.Image) -> image.Image)),
 ) -> String {
   let header =
     "<!DOCTYPE html>
@@ -153,7 +153,7 @@ fn build_gallery_html(
 <head>
   <meta charset=\"UTF-8\">
   <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
-  <title>Imagine Presets Gallery</title>
+  <title>Alakazam Presets Gallery</title>
   <style>
     * {
       margin: 0;
@@ -225,7 +225,7 @@ fn build_gallery_html(
   </style>
 </head>
 <body>
-  <h1>✨ Imagine Presets Gallery</h1>
+  <h1>✨ Alakazam Presets Gallery</h1>
   <div class=\"gallery\">
 "
 
@@ -268,17 +268,17 @@ fn build_gallery_html(
   header <> string.join(items, "") <> footer
 }
 
-fn error_to_string(err: imagine.Error) -> String {
+fn error_to_string(err: image.Error) -> String {
   case err {
-    imagine.CommandFailed(code, stderr) ->
+    image.CommandFailed(code, stderr) ->
       "Command failed (exit " <> int.to_string(code) <> "): " <> stderr
-    imagine.CannotIdentify(msg) -> "Cannot identify: " <> msg
-    imagine.CannotParseFormat(fmt) -> "Cannot parse format: " <> fmt
-    imagine.CannotParseWidth -> "Cannot parse width"
-    imagine.CannotParseHeight -> "Cannot parse height"
-    imagine.CannotParseDepth -> "Cannot parse depth"
-    imagine.CannotParseFileSize -> "Cannot parse file size"
-    imagine.CannotWriteTempFile -> "Cannot write temp file"
-    imagine.CannotCreateTempFile -> "Cannot create temp file"
+    image.CannotIdentify(msg) -> "Cannot identify: " <> msg
+    image.CannotParseFormat(fmt) -> "Cannot parse format: " <> fmt
+    image.CannotParseWidth -> "Cannot parse width"
+    image.CannotParseHeight -> "Cannot parse height"
+    image.CannotParseDepth -> "Cannot parse depth"
+    image.CannotParseFileSize -> "Cannot parse file size"
+    image.CannotWriteTempFile -> "Cannot write temp file"
+    image.CannotCreateTempFile -> "Cannot create temp file"
   }
 }
