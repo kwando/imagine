@@ -107,7 +107,7 @@ type ImageOperation {
   Thumbnail(Int, Int)
   SetFilter(Filter)
   Colorspace(String)
-  ContrastStretch(String)
+  ContrastStretch(StretchLevels)
   Colors(Int)
   OrderedDither(String)
   Dither
@@ -128,6 +128,10 @@ type CropGeometry {
   Contain(Int, Int)
   Scale(Float)
   Area(Int)
+}
+
+type StretchLevels {
+  StretchLevels(black_percent: Float, white_percent: Float)
 }
 
 /// Controls how an image is resized. Each variant maps to a specific
@@ -521,12 +525,19 @@ pub fn colorspace(image: Image, kind: Colorspace) -> Image {
 }
 
 /// Enhances the contrast of the image by stretching the range of intensity values.
-/// The `levels` parameter specifies how much to stretch, with common values like
-/// "2%x2%" stretching 2% of the darkest and lightest pixels.
+/// The `black_percent` and `white_percent` parameters specify the percentage of
+/// pixels to stretch at the dark and light ends of the histogram respectively.
 /// Uses ImageMagick `-contrast-stretch` option.
 ///
-pub fn contrast_stretch(image: Image, levels: String) -> Image {
-  prepend_operation(image, ContrastStretch(levels))
+pub fn contrast_stretch(
+  image: Image,
+  black_percent: Float,
+  white_percent: Float,
+) -> Image {
+  prepend_operation(
+    image,
+    ContrastStretch(StretchLevels(black_percent, white_percent)),
+  )
 }
 
 /// Reduces the number of colors in the image to at most the specified number.
@@ -1053,7 +1064,13 @@ fn operation_to_args(operation: ImageOperation) -> List(String) {
     ]
     SetFilter(filter) -> ["-filter", filter_to_string(filter)]
     Colorspace(kind) -> ["-colorspace", kind]
-    ContrastStretch(kind) -> ["-contrast-stretch", kind]
+    ContrastStretch(levels) -> [
+      "-contrast-stretch",
+      float.to_string(levels.black_percent)
+        <> "%x"
+        <> float.to_string(levels.white_percent)
+        <> "%",
+    ]
     Colors(n) -> ["-colors", int.to_string(n)]
     Monochrome -> ["-monochrome"]
     OrderedDither(kind) -> ["-ordered-dither", kind]
