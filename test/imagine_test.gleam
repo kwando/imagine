@@ -112,16 +112,16 @@ pub fn posterize_without_dither_test() {
   assert info.height == 75
 }
 
-pub fn crop_width_test() {
+pub fn crop_test() {
   let assert Ok(_) =
     imagine.from_file("test/fixtures/logo.png")
-    |> imagine.gravity(imagine.Center)
-    |> imagine.crop_width(200)
+    |> imagine.crop(100, 50, 200, 150)
     |> imagine.to_file("test/output/cropped.png")
 
   let assert Ok(info) = imagine.identify("test/output/cropped.png")
   assert info.format == imagine.Png
   assert info.width == 200
+  assert info.height == 150
 }
 
 pub fn to_bits_returns_data_test() {
@@ -292,15 +292,13 @@ pub fn extent_command_test() {
   assert command == "magick input.png -extent 200x150 output.png"
 }
 
-pub fn gravity_command_test() {
+pub fn crop_command_test() {
   let command =
     imagine.from_file("input.png")
-    |> imagine.gravity(imagine.Center)
-    |> imagine.crop_width(100)
+    |> imagine.crop(10, 20, 100, 200)
     |> imagine.to_command("output.png")
 
-  assert command
-    == "magick input.png -gravity center -crop 100x0+0+0 +repage output.png"
+  assert command == "magick input.png -crop 100x200+10+20 +repage output.png"
 }
 
 pub fn resize_fit_command_test() {
@@ -482,4 +480,23 @@ pub fn webp_format_test() {
 
   let assert Ok(info) = imagine.identify("test/output/logo.webp")
   assert info.format == imagine.Webp
+}
+
+pub fn sepia_command_test() {
+  let command =
+    imagine.from_file("input.png")
+    |> imagine.sepia(80.0)
+    |> imagine.to_command("output.png")
+
+  assert command == "magick input.png -sepia-tone 80.0% output.png"
+}
+
+pub fn sepia_test() {
+  let assert Ok(_) =
+    imagine.from_file("test/fixtures/logo.png")
+    |> imagine.sepia(80.0)
+    |> imagine.to_file("test/output/sepia.png")
+
+  let assert Ok(info) = imagine.identify("test/output/sepia.png")
+  assert info.format == imagine.Png
 }

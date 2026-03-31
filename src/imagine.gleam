@@ -119,7 +119,7 @@ type ImageOperation {
   Sharpen(radius: Float)
   Flop
   Strip
-  Crop(CropGeometry)
+  Crop(x: Int, y: Int, width: Int, height: Int)
   Extent(Int, Int)
   AutoOrient
   Flip
@@ -131,15 +131,8 @@ type ImageOperation {
   Quality(percent: Int)
   BrightnessContrast(brightness: Int, contrast: Int)
   Gamma(value: Float)
+  Sepia(threshold: Float)
   Custom(key: String, value: String)
-}
-
-type CropGeometry {
-  FixedWidth(Int)
-  FixedHeight(Int)
-  Contain(Int, Int)
-  Scale(Float)
-  Area(Int)
 }
 
 /// Controls how an image is resized. Each variant maps to a specific
@@ -643,6 +636,16 @@ pub fn gamma(image: Image, value: Float) -> Image {
   prepend_operation(image, Gamma(value))
 }
 
+/// Applies a sepia tone effect to the image.
+/// The threshold is a percentage (0-100) that controls the intensity of the effect.
+/// Higher values produce a stronger sepia effect.
+///
+/// Uses ImageMagick `-sepia-tone` option.
+///
+pub fn sepia(image: Image, threshold: Float) -> Image {
+  prepend_operation(image, Sepia(threshold))
+}
+
 /// Automatically adjusts the image orientation based on EXIF data.
 ///
 /// Uses ImageMagick `-auto-orient` option.
@@ -651,50 +654,14 @@ pub fn auto_orient(image: Image) -> Image {
   prepend_operation(image, AutoOrient)
 }
 
-/// Crops the image to the specified area in pixels.
-/// Respects the gravity setting for crop position.
+/// Crops the image to the specified rectangle.
+/// The x and y coordinates specify the top-left corner of the crop area.
+/// Width and height specify the dimensions of the crop.
 ///
-/// Uses ImageMagick `-crop pixels@` option.
+/// Uses ImageMagick `-crop widthxheight+x+y` option.
 ///
-pub fn crop_area(image: Image, pixels: Int) -> Image {
-  prepend_operation(image, Crop(Area(pixels)))
-}
-
-/// Crops the image to a fixed width, keeping the full height.
-/// Respects the gravity setting for crop position.
-///
-/// Uses ImageMagick `-crop widthx0` option.
-///
-pub fn crop_width(image: Image, pixels: Int) -> Image {
-  prepend_operation(image, Crop(FixedWidth(pixels)))
-}
-
-/// Crops the image to a fixed height, keeping the full width.
-/// Respects the gravity setting for crop position.
-///
-/// Uses ImageMagick `-crop 0xheight` option.
-///
-pub fn crop_height(image: Image, pixels: Int) -> Image {
-  prepend_operation(image, Crop(FixedHeight(pixels)))
-}
-
-/// Crops the image to fit within the specified dimensions while preserving
-/// aspect ratio, trimming excess from the larger dimension.
-/// Respects the gravity setting for crop position.
-///
-/// Uses ImageMagick `-crop widthxheight` option.
-///
-pub fn contain(image: Image, width: Int, height: Int) -> Image {
-  prepend_operation(image, Crop(Contain(width, height)))
-}
-
-/// Scales the image by the specified percentage.
-/// Respects the gravity setting for crop position.
-///
-/// Uses ImageMagick `-crop scale%` option.
-///
-pub fn scale(image: Image, percent: Float) -> Image {
-  prepend_operation(image, Crop(Scale(percent)))
+pub fn crop(image: Image, x: Int, y: Int, width: Int, height: Int) -> Image {
+  prepend_operation(image, Crop(x:, y:, width:, height:))
 }
 
 /// Flips the image vertically (top becomes bottom).
@@ -1144,7 +1111,17 @@ fn operation_to_args(operation: ImageOperation) -> List(String) {
     // +repage resets the virtual canvas after cropping. Without it, ImageMagick
     // retains the original canvas dimensions, which causes subsequent operations
     // and output files to carry incorrect offsets.
-    Crop(geometry) -> ["-crop", geom_to_arg(geometry), "+repage"]
+    Crop(x:, y:, width:, height:) -> [
+      "-crop",
+      int.to_string(width)
+        <> "x"
+        <> int.to_string(height)
+        <> "+"
+        <> int.to_string(x)
+        <> "+"
+        <> int.to_string(y),
+      "+repage",
+    ]
     Extent(w, h) -> ["-extent", int.to_string(w) <> "x" <> int.to_string(h)]
     AutoOrient -> ["-auto-orient"]
     Flip -> ["-flip"]
@@ -1153,7 +1130,7 @@ fn operation_to_args(operation: ImageOperation) -> List(String) {
     AlphaExtract -> ["-alpha", "extract"]
     Background(color) -> [
       "-background",
-      colour.to_rgb_hex_string(color),
+      "#" <> colour.to_rgb_hex_string(color),
     ]
     Rotate(degrees) -> ["-rotate", float.to_string(degrees)]
     Quality(percent) -> ["-quality", int.to_string(percent)]
@@ -1162,6 +1139,10 @@ fn operation_to_args(operation: ImageOperation) -> List(String) {
       int.to_string(brightness) <> "x" <> int.to_string(contrast),
     ]
     Gamma(value) -> ["-gamma", float.to_string(value)]
+    Sepia(threshold) -> [
+      "-sepia-tone",
+      float.to_string(threshold) <> "%",
+    ]
     Custom(key:, value: "") -> [key]
     Custom(key:, value:) -> [key, value]
   }
@@ -1209,18 +1190,5 @@ fn filter_to_string(filter: Filter) -> String {
     Mitchell -> "Mitchell"
     Triangle -> "Triangle"
     Catrom -> "Catrom"
-  }
-}
-
-fn geom_to_arg(geometry: CropGeometry) -> String {
-  case geometry {
-    // +0+0 is required to prevent ImageMagick from interpreting zero-dimension
-    // geometries (e.g. 200x0) as a tiling instruction, which would produce
-    // multiple numbered output files instead of a single cropped image.
-    FixedWidth(w) -> int.to_string(w) <> "x0+0+0"
-    FixedHeight(h) -> "0x" <> int.to_string(h) <> "+0+0"
-    Scale(scale) -> float.to_string(scale) <> "%"
-    Area(area) -> int.to_string(area) <> "@"
-    Contain(w, h) -> int.to_string(w) <> "x" <> int.to_string(h)
   }
 }

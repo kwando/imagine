@@ -287,9 +287,7 @@ imagine.from_file("photo.jpg")
 
 ### Cropping
 
-- `crop_width(image, pixels)` - Crop to width
-- `crop_area(image, pixels)` - Crop to pixel area
-- `contain(image, width, height)` - Crop to contain
+- `crop(image, x, y, width, height)` - Crop to a specific rectangle at position (x, y) with given dimensions
 
 ### Colors & Color Space
 
