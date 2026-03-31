@@ -280,7 +280,7 @@ pub fn background_colour_command_test() {
     |> imagine.background(colour.red)
     |> imagine.to_command("output.png")
 
-  assert command == "magick input.png -background CC0000 output.png"
+  assert command == "magick input.png -background #CC0000 output.png"
 }
 
 pub fn extent_command_test() {
