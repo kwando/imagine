@@ -7,7 +7,7 @@ version = "1.0.0"
 description = "Image manipulation via ImageMagicks command line"
 licences = ["MIT"]
 repository = { type = "github", user = "kwando", repo = "alakazam" }
-# links = [{ title = "Website", href = "" }]
+links = [{ title = "IM Docs", href = "https://imagemagick.org/script/command-line-processing.php" }]
 #
 # For a full reference of all the available options, you can have a look at
 # https://gleam.run/writing-gleam/gleam-toml/.
