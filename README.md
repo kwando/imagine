@@ -1,23 +1,27 @@
-# imagine
+# alakazam
 
-[![Package Version](https://img.shields.io/hexpm/v/imagine)](https://hex.pm/packages/imagine)
-[![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/imagine/)
+[![Package Version](https://img.shields.io/hexpm/v/alakazam)](https://hex.pm/packages/alakazam)
+[![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/alakazam/)
 
 A fluent, type-safe image processing library for Gleam, powered by ImageMagick.
 
 ## How It Works
 
-imagine is a thin, composable wrapper around the ImageMagick `magick`
+alakazam is a thin, composable wrapper around the ImageMagick `magick`
 command-line tool. Rather than binding to a native C library, it builds a
 pipeline of operations in Gleam and compiles them into a single `magick`
 command that is executed when the image is written.
 
 ```gleam
-imagine.from_file("photo.jpg")
-|> imagine.resize_contain(800, 600)
-|> imagine.sharpen(0.5)
-|> imagine.to_file("output.jpg")
-// Executes: magick photo.jpg -resize 800x600 -sharpen 0.5 output.jpg
+import alakazam/image
+
+pub fn main() {
+  image.from_file("photo.jpg")
+  |> image.resize_contain(800, 600)
+  |> image.sharpen(0.5)
+  |> image.to_file("output.jpg")
+  // Executes: magick photo.jpg -resize 800x600 -sharpen 0.5 output.jpg
+}
 ```
 
 You can inspect the generated command at any point using `to_command/2`,
@@ -71,19 +75,16 @@ magick -version
 ## Installation
 
 ```sh
-gleam add imagine
+gleam add alakazam
 ```
 
 ## Quick Start
 
 ```gleam
-import imagine
-
-pub fn main() {
-  // Basic resize and save
-  imagine.from_file("photo.jpg")
-  |> imagine.resize_contain(800, 600)
-  |> imagine.to_file("resized.jpg")
+// Basic resize and save
+image.from_file("photo.jpg")
+|> image.resize_contain(800, 600)
+|> image.to_file("resized.jpg")
 }
 ```
 
@@ -92,30 +93,26 @@ pub fn main() {
 ### Resizing Images
 
 ```gleam
-import imagine
+// Fit within dimensions (preserves aspect ratio)
+image.from_file("large.png")
+|> image.resize_contain(300, 200)
+|> image.to_file("fitted.png")
 
-pub fn resize_examples() {
-  // Fit within dimensions (preserves aspect ratio)
-  imagine.from_file("large.png")
-  |> imagine.resize_contain(300, 200)
-  |> imagine.to_file("fitted.png")
+// Fill exact dimensions (may stretch)
+image.from_file("photo.jpg")
+|> image.resize_fill(800, 600)
+|> image.to_file("filled.jpg")
 
-  // Fill exact dimensions (may stretch)
-  imagine.from_file("photo.jpg")
-  |> imagine.resize_fill(800, 600)
-  |> imagine.to_file("filled.jpg")
+// Cover/crop to fill (CSS object-fit: cover behavior)
+image.from_file("banner.jpg")
+|> image.resize_cover(1920, 1080, image.Center)
+|> image.to_file("cover.jpg")
 
-  // Cover/crop to fill (CSS object-fit: cover behavior)
-  imagine.from_file("banner.jpg")
-  |> imagine.resize_cover(1920, 1080, imagine.Center)
-  |> imagine.to_file("cover.jpg")
-
-  // Reduce colors with dithering for retro/pixel art look
-  imagine.from_file("photo.jpg")
-  |> imagine.dither()
-  |> imagine.colors(8)
-  |> imagine.to_file("retro.png")
-}
+// Reduce colors with dithering for retro/pixel art look
+image.from_file("photo.jpg")
+|> image.dither()
+|> image.colors(8)
+|> image.to_file("retro.png")
 ```
 
 ### Creating Thumbnails
@@ -123,9 +120,9 @@ pub fn resize_examples() {
 Thumbnails are optimized for creating preview images - they automatically strip metadata and use less memory:
 
 ```gleam
-imagine.from_file("high_res_photo.jpg")
-|> imagine.thumbnail(150, 150)
-|> imagine.to_file("thumb.jpg")
+image.from_file("high_res_photo.jpg")
+|> image.thumbnail(150, 150)
+|> image.to_file("thumb.jpg")
 ```
 
 ### Controlling Resampling Quality
@@ -134,16 +131,16 @@ Choose the right filter for your image type:
 
 ```gleam
 // For pixel art - preserve sharp edges
-imagine.from_file("pixel_art.png")
-|> imagine.filter(imagine.Nearest)
-|> imagine.resize_contain(200, 200)
-|> imagine.to_file("scaled.png")
+image.from_file("pixel_art.png")
+|> image.filter(image.Nearest)
+|> image.resize_contain(200, 200)
+|> image.to_file("scaled.png")
 
 // For photos - high quality (default)
-imagine.from_file("photo.jpg")
-|> imagine.filter(imagine.Lanczos)
-|> imagine.thumbnail(100, 100)
-|> imagine.to_file("thumb.jpg")
+image.from_file("photo.jpg")
+|> image.filter(image.Lanczos)
+|> image.thumbnail(100, 100)
+|> image.to_file("thumb.jpg")
 ```
 
 Available filters:
@@ -160,26 +157,30 @@ Available filters:
 Combine multiple transformations in a single pipeline:
 
 ```gleam
-imagine.from_file("input.jpg")
-|> imagine.resize_contain(800, 600)
-|> imagine.sharpen(0.5)
-|> imagine.strip()  // Remove metadata for smaller files
-|> imagine.to_file("optimized.jpg")
+image.from_file("input.jpg")
+|> image.resize_contain(800, 600)
+|> image.sharpen(0.5)
+|> image.strip()  // Remove metadata for smaller files
+|> image.to_file("optimized.jpg")
 ```
 
 ### Getting Image Information
 
 ```gleam
-case imagine.identify("photo.jpg") {
-  Ok(info) -> {
-    io.println("Format: " <> format_to_string(info.format))
-    io.println("Dimensions: " <> int.to_string(info.width) <> "x" <> int.to_string(info.height))
-    io.println("Colorspace: " <> colorspace_to_string(info.colorspace))
-    io.println("Bit depth: " <> int.to_string(info.depth))
-    io.println("File size: " <> int.to_string(info.file_size) <> " bytes")
-    io.println("Has alpha: " <> bool.to_string(info.has_alpha))
+import alakazam/image
+
+pub fn main() {
+  case image.identify("photo.jpg") {
+    Ok(info) -> {
+      io.println("Format: " <> format_to_string(info.format))
+      io.println("Dimensions: " <> int.to_string(info.width) <> "x" <> int.to_string(info.height))
+      io.println("Colorspace: " <> colorspace_to_string(info.colorspace))
+      io.println("Bit depth: " <> int.to_string(info.depth))
+      io.println("File size: " <> int.to_string(info.file_size) <> " bytes")
+      io.println("Has alpha: " <> bool.to_string(info.has_alpha))
+    }
+    Error(e) -> io.println("Failed to identify image")
   }
-  Error(e) -> io.println("Failed to identify image")
 }
 ```
 
@@ -187,12 +188,12 @@ case imagine.identify("photo.jpg") {
 
 ```gleam
 // Convert PNG to JPEG
-imagine.from_file("image.png")
-|> imagine.to_file("image.jpg")
+image.from_file("image.png")
+|> image.to_file("image.jpg")
 
 // Get image as bytes in specific format
-imagine.from_file("photo.jpg")
-|> imagine.to_bits(imagine.Png)
+image.from_file("photo.jpg")
+|> image.to_bits(image.Png)
 ```
 
 ### Working with Binary Data
@@ -200,15 +201,15 @@ imagine.from_file("photo.jpg")
 ```gleam
 // Load image from BitArray (e.g., from database or API)
 let image_bits = read_image_from_database()
-imagine.from_bits(image_bits)
-|> imagine.resize_contain(100, 100)
-|> imagine.to_file("resized.png")
+image.from_bits(image_bits)
+|> image.resize_contain(100, 100)
+|> image.to_file("resized.png")
 
 // Round-trip: File -> BitArray -> File
-imagine.from_file("photo.jpg")
-|> imagine.to_bits(imagine.Png)
-|> imagine.from_bits
-|> imagine.to_file("converted.png")
+image.from_file("photo.jpg")
+|> image.to_bits(image.Png)
+|> image.from_bits
+|> image.to_file("converted.png")
 ```
 
 ### Color Reduction
@@ -219,29 +220,30 @@ Reduce the color palette for stylistic effects or smaller file sizes. Both opera
 
 ```gleam
 // 8-color image with dithering for smooth gradients
-imagine.from_file("photo.jpg")
-|> imagine.dither()
-|> imagine.colors(8)
-|> imagine.to_file("8color.png")
+image.from_file("photo.jpg")
+|> image.dither()
+|> image.colors(8)
+|> image.to_file("8color.png")
 ```
 
 **`posterize(n)`** - Reduces to **n levels per color channel** (R, G, B). Creates `n³` total colors with uniform steps, producing visible color banding (posterization effect).
 
 ```gleam
 // 4 levels per channel = 4³ = 64 total colors (retro poster look)
-imagine.from_file("photo.jpg")
-|> imagine.dither()
-|> imagine.posterize(4)
-|> imagine.to_file("posterized.png")
+image.from_file("photo.jpg")
+|> image.dither()
+|> image.posterize(4)
+|> image.to_file("posterized.png")
 
 // Extreme posterization: 2 levels per channel = only 8 colors total
-imagine.from_file("photo.jpg")
-|> imagine.dither()
-|> imagine.posterize(2)
-|> imagine.to_file("8color-poster.png")
+image.from_file("photo.jpg")
+|> image.dither()
+|> image.posterize(2)
+|> image.to_file("8color-poster.png")
 ```
 
 **When to use:**
+
 - **`colors()`** - When you want a specific small palette optimized for the image (e.g., 8-color GIF)
 - **`posterize()`** - When you want visible color banding/retro poster effects with uniform color steps
 
@@ -327,7 +329,7 @@ gleam format --check src test  # Check formatting
 
 ## Documentation
 
-Further documentation can be found at [https://hexdocs.pm/imagine](https://hexdocs.pm/imagine).
+Further documentation can be found at [https://hexdocs.pm/alakazam](https://hexdocs.pm/alakazam).
 
 ## License
 
