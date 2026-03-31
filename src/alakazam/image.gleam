@@ -81,6 +81,12 @@
 ////
 //// See [ImageMagick's documentation](https://imagemagick.org/script/command-line-processing.php)
 //// for details on available options and advanced usage.
+////
+//// ## Security
+//// Processing images with ImageMagick is potentially unsafe. Make sure you read the documentation
+//// and understand the security implications before using this library.
+////
+//// There are more information in the README.
 
 import gleam/bit_array
 import gleam/float

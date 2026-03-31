@@ -1,5 +1,7 @@
 import alakazam/image
 import envoy
+import exception
+import gleam/string
 import gleam_community/colour
 import gleeunit
 import simplifile
@@ -505,8 +507,38 @@ pub fn sepia_test() {
 pub fn policy_test() {
   let assert Ok(default_policies) = image.policy()
 
-  envoy.set("MAGICK_CONFIGURE_PATH", "priv")
+  use <- with_configure_path("priv")
   let assert Ok(with_overriden_policies) = image.policy()
 
   assert default_policies != with_overriden_policies
+}
+
+pub fn hardened_blocks_pdf_test() {
+  use <- with_configure_path("priv")
+
+  // when the hardened policy is set, PDFs should not be readable
+  let assert Error(image.CommandFailed(_, error)) =
+    image.from_file("test/fixtures/hello.pdf")
+    |> image.to_file("test/output/hello.png")
+
+  assert string.contains(
+    error,
+    "attempt to perform an operation not allowed by the security policy `PDF'",
+  )
+}
+
+// Overrides the MAGICK_CONFIGURE_PATH env variable during the execution of the callback.
+// This function touches global state but it works since the test are run sequentially.
+fn with_configure_path(configure_path: String, callback: fn() -> a) {
+  let variable_name = "MAGICK_CONFIGURE_PATH"
+  let existing_path = envoy.get(variable_name)
+  envoy.set(variable_name, configure_path)
+
+  use <- exception.defer(fn() {
+    case existing_path {
+      Ok(existing_path) -> envoy.set(variable_name, existing_path)
+      Error(_) -> envoy.unset(variable_name)
+    }
+  })
+  callback()
 }

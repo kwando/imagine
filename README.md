@@ -62,7 +62,11 @@ See the [Prerequisites](#prerequisites) section for installation instructions.
 
 ## Security
 
-ImageMagick is a powerful tool that can execute complex operations on images. When processing untrusted user uploads, security is critical. This library includes a restrictive security policy to minimize attack surface.
+ImageMagick is a powerful tool that can execute complex operations on images.
+When processing untrusted user uploads, security is critical. This library includes a
+restrictive security policy to minimize attack surface.
+
+The policy is _not_ enabled by default.
 
 ### Security Policy
 
@@ -73,7 +77,6 @@ The repository includes `priv/policy.xml` - a whitelist-based ImageMagick securi
 - **Blocks dangerous formats**: PDF, PostScript, MVG, MSL, SVG, XPS, WMF, EMF, and others
 - **Sets resource limits**: 256MB memory, 1GB disk, 30-second timeout, 16K max dimensions
 - **Disables dangerous features**: External command execution, file path expansion, clipboard access, module loading
--
 
 ### Using the Security Policy
 
@@ -106,7 +109,7 @@ COPY priv/policy.xml /etc/ImageMagick-7/policy.xml
 
 ### Production Security Recommendations
 
-1. **Always use the security policy** in production environments processing user uploads
+1. **Always use a security policy** in production environments processing user uploads
 2. **Run in isolated containers** with limited resources and network access
 3. **Validate file types** before processing (check magic bytes, not just extensions)
 4. **Set file size limits** before images reach ImageMagick
