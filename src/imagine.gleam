@@ -414,6 +414,7 @@ pub fn from_bits(bits: BitArray) -> Image {
 }
 
 /// Resizes the image using the specified resize mode.
+///
 /// Uses ImageMagick `-resize` option.
 ///
 pub fn resize(image: Image, kind: Resize) -> Image {
@@ -423,6 +424,7 @@ pub fn resize(image: Image, kind: Resize) -> Image {
 /// Resizes the image to fit within the specified dimensions while preserving
 /// aspect ratio. The image will be equal to or smaller than the given width
 /// and height.
+///
 /// Uses ImageMagick `-resize widthxheight` option.
 ///
 pub fn resize_contain(image: Image, width: Int, height: Int) -> Image {
@@ -431,6 +433,7 @@ pub fn resize_contain(image: Image, width: Int, height: Int) -> Image {
 
 /// Resizes the image to exactly the specified dimensions, ignoring aspect
 /// ratio. The image may be distorted.
+///
 /// Uses ImageMagick `-resize widthxheight!` option.
 ///
 pub fn resize_fill(image: Image, width: Int, height: Int) -> Image {
@@ -440,6 +443,7 @@ pub fn resize_fill(image: Image, width: Int, height: Int) -> Image {
 /// Resizes the image to fill the specified dimensions, cropping overflow.
 /// The image will be resized to cover the entire area, and the cropping
 /// position is determined by the gravity parameter.
+///
 /// Uses ImageMagick `-resize widthxheight^` and `-extent` options.
 ///
 pub fn resize_cover(
@@ -506,6 +510,7 @@ pub fn filter(image: Image, filter: Filter) -> Image {
 }
 
 /// Crops or pads the image to the exact specified dimensions.
+///
 /// Uses ImageMagick `-extent widthxheight` option.
 ///
 pub fn extent(image: Image, width: Int, height: Int) -> Image {
@@ -528,6 +533,7 @@ pub fn colorspace(image: Image, kind: Colorspace) -> Image {
 /// Enhances the contrast of the image by stretching the range of intensity values.
 /// The `black_percent` and `white_percent` parameters specify the percentage of
 /// pixels to stretch at the dark and light ends of the histogram respectively.
+///
 /// Uses ImageMagick `-contrast-stretch` option.
 ///
 pub fn contrast_stretch(
@@ -573,6 +579,7 @@ pub fn monochrome(image: Image) -> Image {
 }
 
 /// Negates the colors in the image (color inversion).
+///
 /// Uses ImageMagick `-negate` option.
 ///
 pub fn negate(image: Image) -> Image {
@@ -580,6 +587,7 @@ pub fn negate(image: Image) -> Image {
 }
 
 /// Applies a Gaussian blur to the image.
+///
 /// Uses ImageMagick `-blur radius` option.
 ///
 pub fn blur(image: Image, radius: Float) -> Image {
@@ -587,6 +595,7 @@ pub fn blur(image: Image, radius: Float) -> Image {
 }
 
 /// Automatically adjusts the image orientation based on EXIF data.
+///
 /// Uses ImageMagick `-auto-orient` option.
 ///
 pub fn auto_orient(image: Image) -> Image {
@@ -595,6 +604,7 @@ pub fn auto_orient(image: Image) -> Image {
 
 /// Crops the image to the specified area in pixels.
 /// Respects the gravity setting for crop position.
+///
 /// Uses ImageMagick `-crop pixels@` option.
 ///
 pub fn crop_area(image: Image, pixels: Int) -> Image {
@@ -603,6 +613,7 @@ pub fn crop_area(image: Image, pixels: Int) -> Image {
 
 /// Crops the image to a fixed width, keeping the full height.
 /// Respects the gravity setting for crop position.
+///
 /// Uses ImageMagick `-crop widthx0` option.
 ///
 pub fn crop_width(image: Image, pixels: Int) -> Image {
@@ -611,6 +622,7 @@ pub fn crop_width(image: Image, pixels: Int) -> Image {
 
 /// Crops the image to a fixed height, keeping the full width.
 /// Respects the gravity setting for crop position.
+///
 /// Uses ImageMagick `-crop 0xheight` option.
 ///
 pub fn crop_height(image: Image, pixels: Int) -> Image {
@@ -620,6 +632,7 @@ pub fn crop_height(image: Image, pixels: Int) -> Image {
 /// Crops the image to fit within the specified dimensions while preserving
 /// aspect ratio, trimming excess from the larger dimension.
 /// Respects the gravity setting for crop position.
+///
 /// Uses ImageMagick `-crop widthxheight` option.
 ///
 pub fn contain(image: Image, width: Int, height: Int) -> Image {
@@ -628,6 +641,7 @@ pub fn contain(image: Image, width: Int, height: Int) -> Image {
 
 /// Scales the image by the specified percentage.
 /// Respects the gravity setting for crop position.
+///
 /// Uses ImageMagick `-crop scale%` option.
 ///
 pub fn scale(image: Image, percent: Float) -> Image {
@@ -635,6 +649,7 @@ pub fn scale(image: Image, percent: Float) -> Image {
 }
 
 /// Flips the image vertically (top becomes bottom).
+///
 /// Uses ImageMagick `-flip` option.
 ///
 pub fn flip(image: Image) -> Image {
@@ -642,6 +657,7 @@ pub fn flip(image: Image) -> Image {
 }
 
 /// Flops the image horizontally (left becomes right).
+///
 /// Uses ImageMagick `-flop` option.
 ///
 pub fn flop(image: Image) -> Image {
@@ -649,6 +665,7 @@ pub fn flop(image: Image) -> Image {
 }
 
 /// Sharpens the image using an unsharp mask.
+///
 /// Uses ImageMagick `-sharpen radius` option.
 ///
 pub fn sharpen(image: Image, radius: Float) -> Image {
@@ -656,6 +673,7 @@ pub fn sharpen(image: Image, radius: Float) -> Image {
 }
 
 /// Strips all metadata (EXIF, ICC profiles, comments) from the image.
+///
 /// Uses ImageMagick `-strip` option.
 ///
 pub fn strip(image: Image) -> Image {
@@ -663,6 +681,7 @@ pub fn strip(image: Image) -> Image {
 }
 
 /// Sets the gravity (position) for crop and extent operations.
+///
 /// Uses ImageMagick `-gravity` option.
 ///
 pub fn gravity(image: Image, gravity: Gravity) -> Image {
@@ -695,6 +714,7 @@ pub type ImageInfo {
 }
 
 /// Identifies image properties (format, dimensions, colorspace, etc.).
+///
 /// Uses ImageMagick `identify` command.
 ///
 pub fn identify(path: String) -> Result(ImageInfo, Error) {
@@ -787,6 +807,7 @@ fn colorspace_to_string(colorspace: Colorspace) -> String {
 }
 
 /// Applies an ordered dithering pattern to the image.
+///
 /// Uses ImageMagick `-ordered-dither` option.
 ///
 pub fn ordered_dither(image: Image, kind: DitherPattern) -> Image {
@@ -861,6 +882,7 @@ pub fn posterize(image: Image, levels: Int) -> Image {
 }
 
 /// Automatically adjusts the image's color levels.
+///
 /// Uses ImageMagick `-auto-level` option.
 ///
 pub fn auto_level(image: Image) -> Image {
@@ -883,6 +905,7 @@ pub fn raw(image: Image, key: String, value: String) -> Image {
 
 /// Sets the background color for operations like extent that may create
 /// empty areas.
+///
 /// Uses ImageMagick `-background` option.
 ///
 pub fn background(image: Image, color: colour.Colour) -> Image {
@@ -890,6 +913,7 @@ pub fn background(image: Image, color: colour.Colour) -> Image {
 }
 
 /// Extracts the alpha channel as a grayscale image.
+///
 /// Uses ImageMagick `-alpha extract` option.
 ///
 pub fn alpha_to_image(image: Image) -> Image {
@@ -917,6 +941,7 @@ pub type Format {
 }
 
 /// Outputs the image as a BitArray in the specified format.
+///
 /// Uses ImageMagick output to stdout.
 ///
 pub fn to_bits(image: Image, format: Format) -> Result(BitArray, Error) {
@@ -950,6 +975,7 @@ pub fn to_command(image: Image, output_path: String) -> String {
 }
 
 /// Writes the image to a file.
+///
 /// Uses ImageMagick convert command.
 ///
 pub fn to_file(image: Image, path: String) -> Result(String, Error) {
