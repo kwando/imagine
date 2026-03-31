@@ -107,7 +107,7 @@ type ImageOperation {
   Thumbnail(Int, Int)
   SetFilter(Filter)
   Colorspace(String)
-  ContrastStretch(StretchLevels)
+  ContrastStretch(black_percent: Float, white_percent: Float)
   Colors(Int)
   OrderedDither(String)
   Dither
@@ -128,10 +128,6 @@ type CropGeometry {
   Contain(Int, Int)
   Scale(Float)
   Area(Int)
-}
-
-type StretchLevels {
-  StretchLevels(black_percent: Float, white_percent: Float)
 }
 
 /// Controls how an image is resized. Each variant maps to a specific
@@ -534,10 +530,7 @@ pub fn contrast_stretch(
   black_percent: Float,
   white_percent: Float,
 ) -> Image {
-  prepend_operation(
-    image,
-    ContrastStretch(StretchLevels(black_percent, white_percent)),
-  )
+  prepend_operation(image, ContrastStretch(black_percent, white_percent))
 }
 
 /// Reduces the number of colors in the image to at most the specified number.
@@ -1064,12 +1057,9 @@ fn operation_to_args(operation: ImageOperation) -> List(String) {
     ]
     SetFilter(filter) -> ["-filter", filter_to_string(filter)]
     Colorspace(kind) -> ["-colorspace", kind]
-    ContrastStretch(levels) -> [
+    ContrastStretch(black, white) -> [
       "-contrast-stretch",
-      float.to_string(levels.black_percent)
-        <> "%x"
-        <> float.to_string(levels.white_percent)
-        <> "%",
+      float.to_string(black) <> "%x" <> float.to_string(white) <> "%",
     ]
     Colors(n) -> ["-colors", int.to_string(n)]
     Monochrome -> ["-monochrome"]
