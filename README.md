@@ -109,6 +109,12 @@ pub fn resize_examples() {
   imagine.from_file("banner.jpg")
   |> imagine.resize_cover(1920, 1080, imagine.Center)
   |> imagine.to_file("cover.jpg")
+
+  // Reduce colors with dithering for retro/pixel art look
+  imagine.from_file("photo.jpg")
+  |> imagine.dither()
+  |> imagine.colors(8)
+  |> imagine.to_file("retro.png")
 }
 ```
 
@@ -205,6 +211,40 @@ imagine.from_file("photo.jpg")
 |> imagine.to_file("converted.png")
 ```
 
+### Color Reduction
+
+Reduce the color palette for stylistic effects or smaller file sizes. Both operations work well with `dither()` to smooth gradients.
+
+**`colors(n)`** - Reduces to **n total colors** using intelligent quantization. ImageMagick analyzes the image and picks the best colors to represent it.
+
+```gleam
+// 8-color image with dithering for smooth gradients
+imagine.from_file("photo.jpg")
+|> imagine.dither()
+|> imagine.colors(8)
+|> imagine.to_file("8color.png")
+```
+
+**`posterize(n)`** - Reduces to **n levels per color channel** (R, G, B). Creates `n³` total colors with uniform steps, producing visible color banding (posterization effect).
+
+```gleam
+// 4 levels per channel = 4³ = 64 total colors (retro poster look)
+imagine.from_file("photo.jpg")
+|> imagine.dither()
+|> imagine.posterize(4)
+|> imagine.to_file("posterized.png")
+
+// Extreme posterization: 2 levels per channel = only 8 colors total
+imagine.from_file("photo.jpg")
+|> imagine.dither()
+|> imagine.posterize(2)
+|> imagine.to_file("8color-poster.png")
+```
+
+**When to use:**
+- **`colors()`** - When you want a specific small palette optimized for the image (e.g., 8-color GIF)
+- **`posterize()`** - When you want visible color banding/retro poster effects with uniform color steps
+
 ## Available Operations
 
 ### Loading & Saving
@@ -232,7 +272,10 @@ imagine.from_file("photo.jpg")
 - `sharpen(image, radius)` - Sharpen image
 - `monochrome(image)` - Convert to black and white
 - `negate(image)` - Invert colors
-- `ordered_dither(image, pattern)` - Apply dithering patterns
+- `dither(image)` - Enable Floyd-Steinberg error-diffusion dithering
+- `ordered_dither(image, pattern)` - Apply ordered dithering patterns
+- `colors(image, num)` - Reduce colors (use with `dither()` for smooth results)
+- `posterize(image, levels)` - Reduce color levels per channel
 
 ### Transformations
 

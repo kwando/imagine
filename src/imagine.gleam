@@ -88,6 +88,7 @@ import gleam/int
 import gleam/list
 import gleam/result
 import gleam/string
+import gleam_community/colour
 import shellout
 import simplifile
 import temporary
@@ -120,6 +121,7 @@ type ImageOperation {
   Strip
   Crop(CropGeometry)
   Custom(key: String, value: String)
+  Background(colour.Colour)
 }
 
 type CropGeometry {
@@ -893,8 +895,8 @@ pub fn raw(image: Image, key: String, value: String) -> Image {
 /// empty areas.
 /// Uses ImageMagick `-background` option.
 ///
-pub fn background(image: Image, color: String) -> Image {
-  raw(image, "-background", color)
+pub fn background(image: Image, color: colour.Colour) -> Image {
+  prepend_operation(image, Background(color))
 }
 
 /// Extracts the alpha channel as a grayscale image.
@@ -1074,6 +1076,10 @@ fn operation_to_args(operation: ImageOperation) -> List(String) {
     Crop(geometry) -> ["-crop", geom_to_arg(geometry)]
     Custom(key:, value: "") -> [key]
     Custom(key:, value:) -> [key, value]
+    Background(color) -> [
+      "-background",
+      colour.to_rgb_hex_string(color),
+    ]
   }
 }
 
