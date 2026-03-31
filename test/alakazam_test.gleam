@@ -1,4 +1,5 @@
 import alakazam/image
+import envoy
 import gleam_community/colour
 import gleeunit
 import simplifile
@@ -499,4 +500,13 @@ pub fn sepia_test() {
 
   let assert Ok(info) = image.identify("test/output/sepia.png")
   assert info.format == image.Png
+}
+
+pub fn policy_test() {
+  let assert Ok(default_policies) = image.policy()
+
+  envoy.set("MAGICK_CONFIGURE_PATH", "priv")
+  let assert Ok(with_overriden_policies) = image.policy()
+
+  assert default_policies != with_overriden_policies
 }

@@ -785,7 +785,7 @@ pub fn identify(path: String) -> Result(ImageInfo, Error) {
         _ -> Error(CannotIdentify(identity_str))
       }
     }
-    Error(#(exit_code, stderr)) -> Error(CommandFailed(exit_code:, stderr:))
+    Error(return_value) -> Error(shellout_error(return_value))
   }
 }
 
@@ -1071,10 +1071,9 @@ fn execute_commands_on_file(
         |> list.flatten,
       [output_to_arg(output)],
     ])
-  case shellout.command(run: "magick", with: args, in: ".", opt: []) {
-    Ok(data) -> Ok(data)
-    Error(#(exit_code, stderr)) -> Error(CommandFailed(exit_code:, stderr:))
-  }
+
+  shellout.command(run: "magick", with: args, in: ".", opt: [])
+  |> result.map_error(shellout_error)
 }
 
 fn with_temp_file(
@@ -1203,4 +1202,29 @@ fn filter_to_string(filter: Filter) -> String {
     Triangle -> "Triangle"
     Catrom -> "Catrom"
   }
+}
+
+fn shellout_error(return: #(Int, String)) {
+  CommandFailed(return.0, return.1)
+}
+
+/// Lists the current ImageMagick security policy configuration.
+///
+/// This is useful for debugging security-related issues, such as when an image
+/// format is blocked by the security policy. The output shows which coders
+/// (image formats) and resources are allowed or denied.
+///
+/// ## Example
+///
+/// ```gleam
+/// case image.policy() {
+///   Ok(policy_info) -> io.println(policy_info)
+///   Error(e) -> io.println("Failed to get policy: " <> string.inspect(e))
+/// }
+/// ```
+/// Uses ImageMagick `-list policy` command.
+///
+pub fn policy() {
+  shellout.command(run: "magick", with: ["-list", "policy"], in: ".", opt: [])
+  |> result.map_error(shellout_error)
 }

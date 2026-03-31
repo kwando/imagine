@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  ImageMagick Security Policy for alakazam
+
+  This policy implements a whitelist approach for maximum security:
+  - All formats are blocked by default
+  - Only explicitly listed formats are allowed (read/write)
+  - Strict resource limits prevent DoS attacks
+  - Dangerous features are disabled
+
+  To use this policy, set the environment variable:
+    export MAGICK_CONFIGURE_PATH=/path/to/alakazam/priv
+
+  Or copy this file to your ImageMagick config directory:
+    - Linux: /etc/ImageMagick-7/policy.xml
+    - macOS: /usr/local/etc/ImageMagick-7/policy.xml (Homebrew)
+
+  NOTE: You may need to adjust resource limits based on your use case.
+-->
+<policymap>
+  <!-- Resource Limits - Prevent DoS attacks -->
+  <policy domain="resource" name="memory" value="256MiB" />
+  <policy domain="resource" name="map" value="512MiB" />
+  <policy domain="resource" name="disk" value="1GiB" />
+  <policy domain="resource" name="area" value="64MP" />
+  <policy domain="resource" name="time" value="30" />
+  <policy domain="resource" name="width" value="16KP" />
+  <policy domain="resource" name="height" value="16KP" />
+  <policy domain="resource" name="file" value="768" />
+  <policy domain="resource" name="thread" value="4" />
+
+  <!-- Default: Block ALL other coders (whitelist approach) -->
+  <policy domain="coder" rights="none" pattern="*" />
+
+  <!-- Allowed Image Formats - Common safe formats only -->
+  <!-- ImageMagick coder names are case-insensitive; uppercase patterns are sufficient -->
+  <policy domain="coder" rights="read|write" pattern="PNG" />
+  <policy domain="coder" rights="read|write" pattern="JPG" />
+  <policy domain="coder" rights="read|write" pattern="JPEG" />
+  <policy domain="coder" rights="read|write" pattern="WEBP" />
+  <policy domain="coder" rights="read|write" pattern="GIF" />
+  <policy domain="coder" rights="read|write" pattern="BMP" />
+  <policy domain="coder" rights="read|write" pattern="AVIF" />
+  <policy domain="coder" rights="read|write" pattern="PBM" />
+  <policy domain="coder" rights="read|write" pattern="PGM" />
+  <policy domain="coder" rights="read|write" pattern="PPM" />
+
+  <!-- Security: Disable Dangerous Features -->
+  <!--  Do not permit any delegates to execute.  -->
+  <policy domain="delegate" rights="none" pattern="*" />
+  <!--  Do not permit any image filters to load.  -->
+  <policy domain="filter" rights="none" pattern="*" />
+  <!--  Don't read/write from/to stdin/stdout.  -->
+  <policy domain="path" rights="none" pattern="-" />
+  <policy domain="path" rights="none" pattern="fd:*" />
+  <!--  Sensitive system paths are not permitted.  -->
+  <policy domain="path" rights="none" pattern="/etc/*" />
+  <policy domain="path" rights="none" pattern="/proc/*" />
+  <policy domain="path" rights="none" pattern="/sys/*" />
+  <policy domain="path" rights="none" pattern="/root/*" />
+  <!--  Path traversal is not permitted.  -->
+  <policy domain="path" rights="none" pattern="*../*" />
+  <policy domain="path" rights="none" pattern="../*" />
+  <!--  Indirect reading is not permitted.  -->
+  <policy domain="path" rights="none" pattern="@*" />
+</policymap>

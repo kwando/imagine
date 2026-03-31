@@ -55,12 +55,78 @@ appropriate for tight loops that process many small images per second.
 
 **Security.** ImageMagick has a history of security vulnerabilities related
 to parsing complex image formats. Processing untrusted user uploads directly
-can be risky. Consider running image processing in isolated containers or
-sandboxes, validating file types before processing, using restrictive
-ImageMagick policies, and setting resource limits to prevent DoS attacks.
+can be risky. See the [Security](#security) section for detailed recommendations.
 
 ImageMagick must also be installed on every host that runs your application.
 See the [Prerequisites](#prerequisites) section for installation instructions.
+
+## Security
+
+ImageMagick is a powerful tool that can execute complex operations on images. When processing untrusted user uploads, security is critical. This library includes a restrictive security policy to minimize attack surface.
+
+### Security Policy
+
+The repository includes `priv/policy.xml` - a whitelist-based ImageMagick security policy that:
+
+- **Blocks all formats by default** - Only explicitly allowed formats can be processed
+- **Allows safe formats**: PNG, JPEG, WebP, GIF, BMP, TIFF, AVIF, HEIC, PBM, PGM, PPM
+- **Blocks dangerous formats**: PDF, PostScript, MVG, MSL, SVG, XPS, WMF, EMF, and others
+- **Sets resource limits**: 256MB memory, 1GB disk, 30-second timeout, 16K max dimensions
+- **Disables dangerous features**: External command execution, file path expansion, clipboard access, module loading
+-
+
+### Using the Security Policy
+
+**Option 1: Environment Variable (Recommended for Development)**
+
+```bash
+export MAGICK_CONFIGURE_PATH=/path/to/alakazam/priv
+```
+
+**Option 2: System-wide Installation**
+
+Copy the policy to your ImageMagick configuration directory:
+
+```bash
+# macOS (Homebrew)
+cp priv/policy.xml /usr/local/etc/ImageMagick-7/policy.xml
+
+# Ubuntu/Debian
+sudo cp priv/policy.xml /etc/ImageMagick-7/policy.xml
+
+# Verify the policy is loaded
+magick -list policy
+```
+
+**Option 3: Docker/Container**
+
+```dockerfile
+COPY priv/policy.xml /etc/ImageMagick-7/policy.xml
+```
+
+### Production Security Recommendations
+
+1. **Always use the security policy** in production environments processing user uploads
+2. **Run in isolated containers** with limited resources and network access
+3. **Validate file types** before processing (check magic bytes, not just extensions)
+4. **Set file size limits** before images reach ImageMagick
+5. **Monitor resource usage** and set up alerts for unusual patterns
+6. **Keep ImageMagick updated** with the latest security patches
+
+### Testing the Policy
+
+To verify the policy is working:
+
+```bash
+# This should fail (PDF is blocked)
+magick document.pdf output.png
+# Error: attempt to perform an operation not allowed by the security policy
+
+# This should succeed (PNG is allowed)
+magick image.png output.jpg
+```
+
+[Read more about security policys here](https://imagemagick.org/script/security-policy.php#gsc.tab=0)
 
 ## Prerequisites
 
