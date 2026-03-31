@@ -71,6 +71,47 @@ pub fn chain_multiple_operations_test() {
   assert info.height == 150
 }
 
+pub fn dither_test() {
+  let assert Ok(_) =
+    imagine.from_file("test/fixtures/logo.png")
+    |> imagine.resize(imagine.Fit(100, 100))
+    |> imagine.dither()
+    |> imagine.colors(4)
+    |> imagine.to_file("test/output/dithered.png")
+
+  let assert Ok(info) = imagine.identify("test/output/dithered.png")
+  assert info.format == imagine.Png
+  assert info.width == 100
+  assert info.height == 75
+}
+
+pub fn posterize_with_dither_test() {
+  let assert Ok(_) =
+    imagine.from_file("test/fixtures/logo.png")
+    |> imagine.resize(imagine.Fit(100, 100))
+    |> imagine.dither()
+    |> imagine.posterize(4)
+    |> imagine.to_file("test/output/posterized_dither.png")
+
+  let assert Ok(info) = imagine.identify("test/output/posterized_dither.png")
+  assert info.format == imagine.Png
+  assert info.width == 100
+  assert info.height == 75
+}
+
+pub fn posterize_without_dither_test() {
+  let assert Ok(_) =
+    imagine.from_file("test/fixtures/logo.png")
+    |> imagine.resize(imagine.Fit(100, 100))
+    |> imagine.posterize(4)
+    |> imagine.to_file("test/output/posterized_nodither.png")
+
+  let assert Ok(info) = imagine.identify("test/output/posterized_nodither.png")
+  assert info.format == imagine.Png
+  assert info.width == 100
+  assert info.height == 75
+}
+
 pub fn crop_width_test() {
   let assert Ok(_) =
     imagine.from_file("test/fixtures/logo.png")

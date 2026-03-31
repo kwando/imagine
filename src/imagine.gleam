@@ -1,32 +1,86 @@
 //// A Gleam library for image manipulation powered by ImageMagick.
 ////
-//// Provides a composable API for resizing, cropping, filtering, and
-//// converting images through ImageMagick command-line tools.
+//// Provides a composable, type-safe API for resizing, cropping, filtering, and
+//// converting images through ImageMagick command-line tools. Build image
+//// processing pipelines using Gleam's pipe operator (`|>`) and execute them
+//// with a single shell command.
 ////
-//// ## Basic Usage
+//// ## Quick Start
 ////
 //// ```gleam
 //// import imagine
 ////
-//// fn main() {
+//// pub fn main() {
+////   // Basic resize
 ////   imagine.from_file("input.jpg")
 ////   |> imagine.resize_contain(800, 600)
 ////   |> imagine.to_file("output.jpg")
 //// }
 //// ```
 ////
-//// This generates the following commands and executes it
+//// This generates and executes:
 ////
 //// ```sh
 //// magick input.jpg -resize 800x600 output.jpg
 //// ```
 ////
-//// Operations are chained using the pipe operator (`|>`), building
-//// a pipeline of transformations that are executed when the image
-//// is written to a file or converted to a BitArray.
+//// ## Pipeline Operations
 ////
-//// Read more about the available operations in
-//// [ImageMagick's documentation](https://imagemagick.org/script/command-line-processing.php).
+//// Chain multiple transformations that are lazily evaluated when written:
+////
+//// ```gleam
+//// imagine.from_file("photo.jpg")
+//// |> imagine.resize_cover(1920, 1080, imagine.Center)
+//// |> imagine.sharpen(0.5)
+//// |> imagine.strip()  // Remove metadata
+//// |> imagine.to_file("hero-banner.jpg")
+//// ```
+////
+//// ## Color Reduction
+////
+//// Create stylistic effects by reducing the color palette:
+////
+//// ```gleam
+//// // Retro 8-color look with smooth dithering
+//// imagine.from_file("photo.jpg")
+//// |> imagine.dither()
+//// |> imagine.colors(8)
+//// |> imagine.to_file("retro.png")
+////
+//// // Visible color banding (poster effect)
+//// imagine.from_file("photo.jpg")
+//// |> imagine.dither()
+//// |> imagine.posterize(4)  // 4 levels per channel = 64 colors
+//// |> imagine.to_file("posterized.png")
+//// ```
+////
+//// ## Debugging
+////
+//// Preview the generated ImageMagick command without executing:
+////
+//// ```gleam
+//// let command =
+////   imagine.from_file("input.png")
+////   |> imagine.resize_contain(100, 100)
+////   |> imagine.to_command("output.png")
+////
+//// // command == "magick input.png -resize 100x100 output.png"
+//// ```
+////
+//// ## Prerequisites
+////
+//// ImageMagick must be installed and the `magick` command available in PATH:
+////
+//// ```bash
+//// # macOS
+//// brew install imagemagick
+////
+//// # Ubuntu/Debian
+//// apt-get install imagemagick
+//// ```
+////
+//// See [ImageMagick's documentation](https://imagemagick.org/script/command-line-processing.php)
+//// for details on available options and advanced usage.
 
 import gleam/bit_array
 import gleam/float
@@ -54,7 +108,10 @@ type ImageOperation {
   SetFilter(Filter)
   Colorspace(String)
   ContrastStretch(String)
+  Colors(Int)
   OrderedDither(String)
+  Dither
+  Posterize(Int)
   Monochrome
   Negate
   Blur(radius: Float)
@@ -463,6 +520,24 @@ pub fn colorspace(image: Image, kind: Colorspace) -> Image {
   prepend_operation(image, Colorspace(colorspace_to_string(kind)))
 }
 
+/// Reduces the number of colors in the image to at most the specified number.
+///
+/// This uses quantization to select the best colors to represent the image.
+/// Combine with `dither/1` for smoother gradients when reducing to few colors.
+///
+/// ```gleam
+/// image.from_file("photo.jpg")
+/// |> image.dither()
+/// |> image.colors(8)
+/// |> image.to_file("output.png")
+/// ```
+///
+/// Uses ImageMagick `-colors` option.
+///
+pub fn colors(image: Image, num_colors: Int) -> Image {
+  prepend_operation(image, Colors(num_colors))
+}
+
 /// Converts the image to monochrome (pure black and white, 1-bit).
 ///
 /// Unlike `colorspace(image, Gray)`, this produces only pure black and pure
@@ -718,6 +793,52 @@ pub fn ordered_dither(image: Image, kind: DitherPattern) -> Image {
   prepend_operation(image, OrderedDither(pattern))
 }
 
+/// Enables error-diffusion dithering for subsequent color reduction operations.
+///
+/// Error-diffusion dithering (Floyd-Steinberg) produces smoother gradients than
+/// ordered dithering when reducing colors. It propagates quantization errors to
+/// neighboring pixels rather than using a fixed pattern.
+///
+/// Commonly used with `colors/2` to reduce the palette while preserving
+/// smooth transitions:
+///
+/// ```gleam
+/// image.from_file("photo.jpg")
+/// |> image.dither()
+/// |> image.colors(8)
+/// |> image.to_file("output.png")
+/// ```
+///
+/// Uses ImageMagick `-dither FloydSteinberg` option.
+///
+pub fn dither(image: Image) -> Image {
+  prepend_operation(image, Dither)
+}
+
+/// Reduces the image to a fixed number of color levels.
+///
+/// The `levels` argument specifies how many levels per channel to use. For
+/// example, `posterize(image, 4)` produces at most 4^3 = 64 colors.
+///
+/// Use `dither/1` before this function to enable error-diffusion dithering
+/// for smoother transitions between color levels.
+///
+/// ## Example
+///
+/// ```gleam
+/// // Retro 4-color look with dithering
+/// image.from_file("photo.jpg")
+/// |> image.dither()
+/// |> image.posterize(2)
+/// |> image.to_file("output.png")
+/// ```
+///
+/// Uses ImageMagick `-posterize` option.
+///
+pub fn posterize(image: Image, levels: Int) -> Image {
+  prepend_operation(image, Posterize(levels))
+}
+
 /// Automatically adjusts the image's color levels.
 /// Uses ImageMagick `-auto-level` option.
 ///
@@ -908,8 +1029,11 @@ fn operation_to_args(operation: ImageOperation) -> List(String) {
     SetFilter(filter) -> ["-filter", filter_to_string(filter)]
     Colorspace(kind) -> ["-colorspace", kind]
     ContrastStretch(kind) -> ["-contrast-stretch", kind]
+    Colors(n) -> ["-colors", int.to_string(n)]
     Monochrome -> ["-monochrome"]
     OrderedDither(kind) -> ["-ordered-dither", kind]
+    Dither -> ["-dither", "FloydSteinberg"]
+    Posterize(levels) -> ["-posterize", int.to_string(levels)]
     Negate -> ["-negate"]
     Blur(radius:) -> ["-blur", float.to_string(radius)]
     Sharpen(radius:) -> ["-sharpen", float.to_string(radius)]
