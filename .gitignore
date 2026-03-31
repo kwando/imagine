@@ -2,4 +2,5 @@
 *.ez
 /build
 erl_crash.dump
-test/output/
+test/output/*
+!test/output/.gitkeep
