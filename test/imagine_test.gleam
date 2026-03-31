@@ -1,4 +1,5 @@
 import gleam/string
+import gleam_community/colour
 import gleeunit
 import imagine
 import simplifile
@@ -276,4 +277,102 @@ pub fn from_bits_round_trip_test() {
   assert info.format == imagine.Png
   assert info.width == 100
   assert info.height == 75
+}
+
+// Command generation tests
+
+pub fn contrast_stretch_command_test() {
+  let command =
+    imagine.from_file("input.jpg")
+    |> imagine.contrast_stretch(2.5, 1.0)
+    |> imagine.to_command("output.jpg")
+
+  assert command == "magick input.jpg -contrast-stretch 2.5%x1.0% output.jpg"
+}
+
+pub fn background_colour_command_test() {
+  let command =
+    imagine.from_file("input.png")
+    |> imagine.background(colour.red)
+    |> imagine.to_command("output.png")
+
+  assert command == "magick input.png -background CC0000 output.png"
+}
+
+pub fn extent_command_test() {
+  let command =
+    imagine.from_file("input.png")
+    |> imagine.extent(200, 150)
+    |> imagine.to_command("output.png")
+
+  assert command == "magick input.png -extent 200x150 output.png"
+}
+
+pub fn gravity_command_test() {
+  let command =
+    imagine.from_file("input.png")
+    |> imagine.gravity(imagine.Center)
+    |> imagine.crop_width(100)
+    |> imagine.to_command("output.png")
+
+  assert command == "magick input.png -gravity center -crop 100x0 output.png"
+}
+
+pub fn resize_fit_command_test() {
+  let command =
+    imagine.from_file("input.png")
+    |> imagine.resize(imagine.Fit(100, 200))
+    |> imagine.to_command("output.png")
+
+  assert command == "magick input.png -resize 100x200 output.png"
+}
+
+pub fn resize_fill_command_test() {
+  let command =
+    imagine.from_file("input.png")
+    |> imagine.resize(imagine.Fill(100, 200))
+    |> imagine.to_command("output.png")
+
+  assert command == "magick input.png -resize 100x200^ output.png"
+}
+
+pub fn resize_exact_command_test() {
+  let command =
+    imagine.from_file("input.png")
+    |> imagine.resize(imagine.Exact(100, 200))
+    |> imagine.to_command("output.png")
+
+  assert command == "magick input.png -resize 100x200! output.png"
+}
+
+pub fn multiple_operations_command_test() {
+  let command =
+    imagine.from_file("input.png")
+    |> imagine.resize(imagine.Fit(100, 100))
+    |> imagine.flip()
+    |> imagine.strip()
+    |> imagine.to_command("output.png")
+
+  assert command == "magick input.png -resize 100x100 -flip -strip output.png"
+}
+
+pub fn simple_flags_command_test() {
+  let command =
+    imagine.from_file("input.png")
+    |> imagine.auto_orient()
+    |> imagine.auto_level()
+    |> imagine.negate()
+    |> imagine.to_command("output.png")
+
+  assert command
+    == "magick input.png -auto-orient -auto-level -negate output.png"
+}
+
+pub fn alpha_extract_command_test() {
+  let command =
+    imagine.from_file("input.png")
+    |> imagine.alpha_to_image()
+    |> imagine.to_command("output.png")
+
+  assert command == "magick input.png -alpha extract output.png"
 }
