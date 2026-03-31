@@ -361,3 +361,125 @@ pub fn alpha_extract_command_test() {
 
   assert command == "magick input.png -alpha extract output.png"
 }
+
+pub fn rotate_command_test() {
+  let command =
+    imagine.from_file("input.png")
+    |> imagine.rotate(90.0)
+    |> imagine.to_command("output.png")
+
+  assert command == "magick input.png -rotate 90.0 output.png"
+}
+
+pub fn rotate_negative_command_test() {
+  let command =
+    imagine.from_file("input.png")
+    |> imagine.rotate(-45.0)
+    |> imagine.to_command("output.png")
+
+  assert command == "magick input.png -rotate -45.0 output.png"
+}
+
+pub fn quality_command_test() {
+  let command =
+    imagine.from_file("input.png")
+    |> imagine.quality(85)
+    |> imagine.to_command("output.jpg")
+
+  assert command == "magick input.png -quality 85 output.jpg"
+}
+
+pub fn brightness_contrast_command_test() {
+  let command =
+    imagine.from_file("input.png")
+    |> imagine.brightness_contrast(10, 20)
+    |> imagine.to_command("output.png")
+
+  assert command == "magick input.png -brightness-contrast 10x20 output.png"
+}
+
+pub fn brightness_contrast_negative_test() {
+  let command =
+    imagine.from_file("input.png")
+    |> imagine.brightness_contrast(-10, -5)
+    |> imagine.to_command("output.png")
+
+  assert command == "magick input.png -brightness-contrast -10x-5 output.png"
+}
+
+pub fn gamma_command_test() {
+  let command =
+    imagine.from_file("input.png")
+    |> imagine.gamma(1.5)
+    |> imagine.to_command("output.png")
+
+  assert command == "magick input.png -gamma 1.5 output.png"
+}
+
+pub fn gamma_less_than_one_command_test() {
+  let command =
+    imagine.from_file("input.png")
+    |> imagine.gamma(0.7)
+    |> imagine.to_command("output.png")
+
+  assert command == "magick input.png -gamma 0.7 output.png"
+}
+
+pub fn rotate_test() {
+  let assert Ok(_) =
+    imagine.from_file("test/fixtures/logo.png")
+    |> imagine.rotate(90.0)
+    |> imagine.to_file("test/output/rotated.png")
+
+  let assert Ok(info) = imagine.identify("test/output/rotated.png")
+  assert info.format == imagine.Png
+  assert info.height == 640
+  assert info.width == 480
+}
+
+pub fn quality_test() {
+  let assert Ok(_) =
+    imagine.from_file("test/fixtures/logo.png")
+    |> imagine.quality(50)
+    |> imagine.to_file("test/output/low_quality.jpg")
+
+  let assert Ok(info) = imagine.identify("test/output/low_quality.jpg")
+  assert info.format == imagine.Jpeg
+}
+
+pub fn brightness_contrast_test() {
+  let assert Ok(_) =
+    imagine.from_file("test/fixtures/logo.png")
+    |> imagine.brightness_contrast(20, 30)
+    |> imagine.to_file("test/output/adjusted.png")
+
+  let assert Ok(info) = imagine.identify("test/output/adjusted.png")
+  assert info.format == imagine.Png
+}
+
+pub fn gamma_test() {
+  let assert Ok(_) =
+    imagine.from_file("test/fixtures/logo.png")
+    |> imagine.gamma(1.5)
+    |> imagine.to_file("test/output/gamma.png")
+
+  let assert Ok(info) = imagine.identify("test/output/gamma.png")
+  assert info.format == imagine.Png
+}
+
+pub fn webp_format_command_test() {
+  let command =
+    imagine.from_file("input.png")
+    |> imagine.to_command("output.webp")
+
+  assert command == "magick input.png output.webp"
+}
+
+pub fn webp_format_test() {
+  let assert Ok(_) =
+    imagine.from_file("test/fixtures/logo.png")
+    |> imagine.to_file("test/output/logo.webp")
+
+  let assert Ok(info) = imagine.identify("test/output/logo.webp")
+  assert info.format == imagine.Webp
+}

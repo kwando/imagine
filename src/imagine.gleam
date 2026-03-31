@@ -127,6 +127,10 @@ type ImageOperation {
   AutoLevel
   AlphaExtract
   Background(colour.Colour)
+  Rotate(degrees: Float)
+  Quality(percent: Int)
+  BrightnessContrast(brightness: Int, contrast: Int)
+  Gamma(value: Float)
   Custom(key: String, value: String)
 }
 
@@ -594,6 +598,51 @@ pub fn blur(image: Image, radius: Float) -> Image {
   prepend_operation(image, Blur(radius))
 }
 
+/// Rotates the image by the specified angle in degrees.
+/// Positive values rotate clockwise, negative values rotate counter-clockwise.
+/// The image canvas is automatically expanded to fit the rotated image.
+///
+/// Uses ImageMagick `-rotate` option.
+///
+pub fn rotate(image: Image, degrees: Float) -> Image {
+  prepend_operation(image, Rotate(degrees))
+}
+
+/// Sets the JPEG/WebP compression quality (1-100).
+/// Higher values produce better quality but larger file sizes.
+/// Lower values produce smaller files but with more compression artifacts.
+///
+/// Uses ImageMagick `-quality` option.
+///
+pub fn quality(image: Image, percent: Int) -> Image {
+  prepend_operation(image, Quality(percent))
+}
+
+/// Adjusts the brightness and contrast of the image.
+/// Both values are percentages where 0 means no change.
+/// Positive brightness brightens, negative darkens.
+/// Positive contrast increases contrast, negative decreases.
+///
+/// Uses ImageMagick `-brightness-contrast` option.
+///
+pub fn brightness_contrast(
+  image: Image,
+  brightness: Int,
+  contrast: Int,
+) -> Image {
+  prepend_operation(image, BrightnessContrast(brightness, contrast))
+}
+
+/// Applies gamma correction to the image.
+/// Values greater than 1.0 brighten the image (reduce gamma).
+/// Values less than 1.0 darken the image (increase gamma).
+///
+/// Uses ImageMagick `-gamma` option.
+///
+pub fn gamma(image: Image, value: Float) -> Image {
+  prepend_operation(image, Gamma(value))
+}
+
 /// Automatically adjusts the image orientation based on EXIF data.
 ///
 /// Uses ImageMagick `-auto-orient` option.
@@ -778,6 +827,7 @@ fn string_to_format(input: String) -> Result(Format, Nil) {
     "BMP3" -> Ok(Bmp)
     "JPEG" -> Ok(Jpeg)
     "PNG" -> Ok(Png)
+    "WEBP" -> Ok(Webp)
     "PBM" -> Ok(Pbm)
     "PGM" -> Ok(Pgm)
     _ -> Error(Nil)
@@ -930,6 +980,8 @@ pub type Format {
   Bmp
   /// JPEG. Lossy compression, no transparency. Best for photographs.
   Jpeg
+  /// WebP. Modern format with excellent compression and transparency support.
+  Webp
   /// Portable Bitmap. 1-bit black and white, plain-text or binary encoding.
   Pbm
   /// Portable Graymap. 8-bit grayscale, plain-text or binary encoding.
@@ -1009,6 +1061,7 @@ fn output_to_arg(output: Output) -> String {
     StdoutOutput(format: Png) -> "png:-"
     StdoutOutput(format: Bmp) -> "bmp:-"
     StdoutOutput(format: Jpeg) -> "jpg:-"
+    StdoutOutput(format: Webp) -> "webp:-"
     StdoutOutput(format: Pbm) -> "pbm:-"
     StdoutOutput(format: Pgm) -> "pgm:-"
   }
@@ -1102,6 +1155,13 @@ fn operation_to_args(operation: ImageOperation) -> List(String) {
       "-background",
       colour.to_rgb_hex_string(color),
     ]
+    Rotate(degrees) -> ["-rotate", float.to_string(degrees)]
+    Quality(percent) -> ["-quality", int.to_string(percent)]
+    BrightnessContrast(brightness, contrast) -> [
+      "-brightness-contrast",
+      int.to_string(brightness) <> "x" <> int.to_string(contrast),
+    ]
+    Gamma(value) -> ["-gamma", float.to_string(value)]
     Custom(key:, value: "") -> [key]
     Custom(key:, value:) -> [key, value]
   }
