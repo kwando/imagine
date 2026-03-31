@@ -654,7 +654,7 @@ pub fn strip(image: Image) -> Image {
 }
 
 /// Sets the gravity (position) for crop and extent operations.
-/// Used with `-gravity` option.
+/// Uses ImageMagick `-gravity` option.
 ///
 pub fn gravity(image: Image, gravity: Gravity) -> Image {
   prepend_operation(
