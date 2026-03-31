@@ -600,6 +600,14 @@ pub fn crop_width(image: Image, pixels: Int) -> Image {
   prepend_operation(image, Crop(FixedWidth(pixels)))
 }
 
+/// Crops the image to a fixed height, keeping the full width.
+/// Respects the gravity setting for crop position.
+/// Uses ImageMagick `-crop 0xheight` option.
+///
+pub fn crop_height(image: Image, pixels: Int) -> Image {
+  prepend_operation(image, Crop(FixedHeight(pixels)))
+}
+
 /// Crops the image to fit within the specified dimensions while preserving
 /// aspect ratio, trimming excess from the larger dimension.
 /// Respects the gravity setting for crop position.
@@ -1088,7 +1096,7 @@ fn filter_to_string(filter: Filter) -> String {
 fn geom_to_arg(geometry: CropGeometry) -> String {
   case geometry {
     FixedWidth(w) -> int.to_string(w) <> "x0"
-    FixedHeight(h) -> int.to_string(h)
+    FixedHeight(h) -> "0x" <> int.to_string(h)
     Scale(scale) -> float.to_string(scale) <> "%"
     Area(area) -> int.to_string(area) <> "@"
     Contain(w, h) -> int.to_string(w) <> "x" <> int.to_string(h)
