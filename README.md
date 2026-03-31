@@ -51,8 +51,13 @@ blocked by a missing API.
 
 Each pipeline execution spawns an OS process. This is well-suited for
 batch processing, image pipelines, and server-side generation, but is not
-appropriate for tight loops that process many small images per second. For
-those workloads, consider batching operations or pre-generating assets.
+appropriate for tight loops that process many small images per second.
+
+**Security.** ImageMagick has a history of security vulnerabilities related
+to parsing complex image formats. Processing untrusted user uploads directly
+can be risky. Consider running image processing in isolated containers or
+sandboxes, validating file types before processing, using restrictive
+ImageMagick policies, and setting resource limits to prevent DoS attacks.
 
 ImageMagick must also be installed on every host that runs your application.
 See the [Prerequisites](#prerequisites) section for installation instructions.
