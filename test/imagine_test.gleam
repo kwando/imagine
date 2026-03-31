@@ -115,6 +115,7 @@ pub fn posterize_without_dither_test() {
 pub fn crop_width_test() {
   let assert Ok(_) =
     imagine.from_file("test/fixtures/logo.png")
+    |> imagine.gravity(imagine.Center)
     |> imagine.crop_width(200)
     |> imagine.to_file("test/output/cropped.png")
 
@@ -298,7 +299,8 @@ pub fn gravity_command_test() {
     |> imagine.crop_width(100)
     |> imagine.to_command("output.png")
 
-  assert command == "magick input.png -gravity center -crop 100x0 output.png"
+  assert command
+    == "magick input.png -gravity center -crop 100x0+0+0 +repage output.png"
 }
 
 pub fn resize_fit_command_test() {

@@ -1062,7 +1062,10 @@ fn operation_to_args(operation: ImageOperation) -> List(String) {
     Sharpen(radius:) -> ["-sharpen", float.to_string(radius)]
     Flop -> ["-flop"]
     Strip -> ["-strip"]
-    Crop(geometry) -> ["-crop", geom_to_arg(geometry)]
+    // +repage resets the virtual canvas after cropping. Without it, ImageMagick
+    // retains the original canvas dimensions, which causes subsequent operations
+    // and output files to carry incorrect offsets.
+    Crop(geometry) -> ["-crop", geom_to_arg(geometry), "+repage"]
     Extent(w, h) -> ["-extent", int.to_string(w) <> "x" <> int.to_string(h)]
     AutoOrient -> ["-auto-orient"]
     Flip -> ["-flip"]
@@ -1125,8 +1128,11 @@ fn filter_to_string(filter: Filter) -> String {
 
 fn geom_to_arg(geometry: CropGeometry) -> String {
   case geometry {
-    FixedWidth(w) -> int.to_string(w) <> "x0"
-    FixedHeight(h) -> "0x" <> int.to_string(h)
+    // +0+0 is required to prevent ImageMagick from interpreting zero-dimension
+    // geometries (e.g. 200x0) as a tiling instruction, which would produce
+    // multiple numbered output files instead of a single cropped image.
+    FixedWidth(w) -> int.to_string(w) <> "x0+0+0"
+    FixedHeight(h) -> "0x" <> int.to_string(h) <> "+0+0"
     Scale(scale) -> float.to_string(scale) <> "%"
     Area(area) -> int.to_string(area) <> "@"
     Contain(w, h) -> int.to_string(w) <> "x" <> int.to_string(h)
