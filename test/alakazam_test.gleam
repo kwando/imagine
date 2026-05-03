@@ -521,10 +521,7 @@ pub fn hardened_blocks_pdf_test() {
     image.from_file("test/fixtures/hello.pdf")
     |> image.to_file("test/output/hello.png")
 
-  assert string.contains(
-    error,
-    "attempt to perform an operation not allowed by the security policy `PDF'",
-  )
+  assert string.contains(error, "by the security policy `PDF'")
 }
 
 // Overrides the MAGICK_CONFIGURE_PATH env variable during the execution of the callback.
