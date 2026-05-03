@@ -746,6 +746,9 @@ pub fn identify(path: String) -> Result(ImageInfo, Error) {
       run: "magick",
       with: [
         "identify",
+        // force size result to be in bytes
+        "-precision",
+        "16",
         "-format",
         "%m %w %h %[colorspace] %[depth] %[opaque] %[size]",
         path,
